@@ -25,22 +25,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -81,22 +85,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -135,22 +143,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -187,22 +199,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -239,22 +255,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -291,22 +311,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -345,22 +369,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -402,22 +430,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -456,22 +488,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -511,22 +547,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -563,22 +603,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -623,22 +667,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -678,22 +726,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -732,22 +784,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -786,22 +842,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -840,22 +900,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -894,22 +958,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -949,22 +1017,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -1001,22 +1073,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -1053,22 +1129,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -1105,22 +1185,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }
@@ -1160,22 +1244,26 @@
               ]
             }
           },
+          "detectMissingLibraries": false,
+          "forceEVMLA": false,
+          "enableEraVMExtensions": true,
           "libraries": {}
         },
+        "eraVersion": "1.0.1",
         "zksolc": {
-          "version": "1.3.13",
+          "version": "1.5.8",
           "compilerSource": "binary",
           "settings": {
             "optimizer": {
               "enabled": true,
               "mode": "3"
             },
-            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.3.13",
+            "compilerPath": "/Users/maceo/Library/Caches/hardhat-nodejs/compilers-v2/zksolc/zksolc-v1.5.8",
             "missingLibrariesPath": "./.zksolc-libraries-cache/missingLibraryDependencies.json",
             "areLibrariesMissing": false,
             "experimental": {},
-            "libraries": {},
             "enableEraVMExtensions": true,
+            "libraries": {},
             "forceEVMLA": false
           }
         }

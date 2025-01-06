@@ -1,6 +1,8 @@
-import { HardhatUserConfig } from "hardhat/config";
 import "@matterlabs/hardhat-zksync-solc";
 import "@matterlabs/hardhat-zksync-deploy";
+import "@nomicfoundation/hardhat-toolbox";
+import "@matterlabs/hardhat-zksync";
+import { HardhatUserConfig } from "hardhat/config";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -16,22 +18,23 @@ const config: HardhatUserConfig = {
     }
   },
   zksolc: {
-    version: "1.3.13",
+    version: "1.5.8",
     settings: {
-      isSystem: true,
+      enableEraVMExtensions: true
     }
   },
-  defaultNetwork: "lensTestnet",
   networks: {
-    lensTestnet: {
-      url: "https://rpc.testnet.lens.dev",
-      ethNetwork: "sepolia",
-      zksync: true,
-      accounts: process.env.PRIVATE_KEY ? [`${process.env.PRIVATE_KEY}`] : [],
-    },
     hardhat: {
-      zksync: true
-    }
+      zksync: false // Use regular hardhat network for testing
+    },
+    lensTestnet: {
+      chainId: 37111,
+      ethNetwork: "sepolia",
+      url: "https://rpc.testnet.lens.dev",
+      verifyURL:
+        "https://block-explorer-verify.testnet.lens.dev/contract_verification",
+      zksync: true,
+    },
   }
 };
 
