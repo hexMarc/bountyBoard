@@ -1,12 +1,12 @@
 import { LensConfig, development } from '@lens-protocol/react-web';
 import { bindings as wagmiBindings } from '@lens-protocol/wagmi';
-import { createConfig, http } from 'wagmi';
-import { polygonMumbai } from 'viem/chains';
+import { createConfig,http } from 'wagmi';
+import { chains } from "@lens-network/sdk/viem";
 
 const wagmiConfig = createConfig({
-  chains: [polygonMumbai],
+  chains: [chains.testnet],
   transports: {
-    [polygonMumbai.id]: http()
+    [chains.testnet.id]: http()
   }
 });
 

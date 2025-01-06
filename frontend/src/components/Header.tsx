@@ -1,11 +1,10 @@
 'use client'
 
-import { Fragment } from 'react'
 import { Disclosure } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import { useLogin } from '@lens-protocol/react-web'
 import { useAccount } from 'wagmi'
 import { ConnectKitButton } from 'connectkit'
+import { LensAuthButton } from '@/components/lens/LensAuthButton'
 
 const navigation = [
   { name: 'Dashboard', href: '/', current: true },
@@ -19,7 +18,6 @@ function classNames(...classes: string[]) {
 }
 
 export default function Header() {
-  const { execute: login } = useLogin()
   const { address, isConnected } = useAccount()
 
   return (
@@ -62,7 +60,10 @@ export default function Header() {
                 </div>
               </div>
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-                <ConnectKitButton theme="midnight" />
+                <div className="flex items-center space-x-4">
+                  <LensAuthButton />
+                  <ConnectKitButton />
+                </div>
               </div>
             </div>
           </div>

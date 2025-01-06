@@ -1,12 +1,20 @@
-FROM node:18-alpine
+FROM node:20.13-alpine
 
 WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ gcc
 
 # Copy package files
 COPY package*.json ./
 
+# Configure npm for better reliability
+RUN npm config set fetch-retry-maxtimeout 600000 \
+    && npm config set fetch-retry-mintimeout 100000 \
+    && npm config set fetch-timeout 300000
+
 # Install dependencies
-RUN npm install
+RUN npm install --fetch-timeout 300000 --fetch-retry-maxtimeout 600000
 
 # Copy the rest of the application
 COPY . .
