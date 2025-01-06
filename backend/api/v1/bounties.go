@@ -9,13 +9,14 @@ import (
 	"github.com/bountyBoard/internal/models"
 	"github.com/bountyBoard/internal/services"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 )
 
 type CreateBountyRequest struct {
-	Title       string    `json:"title" binding:"required"`
-	Description string    `json:"description" binding:"required"`
-	Reward      string    `json:"reward" binding:"required"`
-	Deadline    time.Time `json:"deadline" binding:"required"`
+	Title       string         `json:"title" binding:"required"`
+	Description string         `json:"description" binding:"required"`
+	Reward      decimal.Decimal `json:"reward" binding:"required"`
+	Deadline    time.Time      `json:"deadline" binding:"required"`
 }
 
 type SubmitWorkRequest struct {
@@ -210,36 +211,74 @@ func submitBounty(c *gin.Context) {
 }
 
 func completeBounty(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id := c.Param("id")
+	bountyID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid bounty ID"})
 		return
 	}
 
-	creatorID := c.GetString("user_id")
-
+	// Start transaction
+	tx := database.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+	
 	var bounty models.Bounty
-	if err := database.DB.First(&bounty, id).Error; err != nil {
+	if err := tx.First(&bounty, bountyID).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bounty not found"})
 		return
 	}
 
-	if bounty.CreatorID != creatorID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Only the creator can complete the bounty"})
+	// Validate bounty can be completed
+	if bounty.Status == "completed" {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bounty is already completed"})
 		return
 	}
 
-	if bounty.Status != "claimed" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bounty must be claimed before completion"})
+	if bounty.HunterID == nil {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bounty has no assigned hunter"})
 		return
 	}
 
 	// Update bounty status
 	bounty.Status = "completed"
-	if err := database.DB.Save(&bounty).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to complete bounty"})
+	if err := tx.Save(&bounty).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bounty status"})
 		return
 	}
 
-	c.JSON(http.StatusOK, bounty)
+	// Award reputation points to the hunter
+	reputationService := services.NewReputationService()
+	reputation, err := reputationService.UpdateScore(*bounty.HunterID, 50) // Award 50 points for completing a bounty
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update reputation"})
+		return
+	}
+
+	// Check and award milestone badges
+	if err := reputationService.CheckAndAwardMilestoneBadges(*bounty.HunterID, reputation); err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check milestone badges"})
+		return
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"bounty": bounty,
+		"reputation": reputation,
+		"message": "Bounty completed successfully",
+	})
 }

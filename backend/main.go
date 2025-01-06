@@ -4,9 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/bountyBoard/api/v1"
+	v1 "github.com/bountyBoard/api/v1"
 	"github.com/bountyBoard/internal/database"
-	"github.com/bountyBoard/internal/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -37,10 +36,12 @@ func main() {
 
 	// Apply Lens authentication middleware to protected routes
 	protected := r.Group("/api")
-	protected.Use(middleware.LensAuth())
+	// protected.Use(middleware.LensAuth())
 
 	// Register API routes
 	v1.RegisterBountyRoutes(r)
+	v1.RegisterReputationRoutes(r)
+	v1.RegisterUserRoutes(protected)
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
