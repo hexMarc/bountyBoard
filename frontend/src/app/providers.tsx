@@ -2,76 +2,66 @@
 
 import { http } from 'wagmi'
 import { createConfig, WagmiProvider } from 'wagmi'
-import { ConnectKitProvider, getDefaultConfig } from 'connectkit'
+import { ConnectKitProvider } from 'connectkit'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { development, LensConfig, LensProvider } from '@lens-protocol/react-web'
 import { bindings } from '@lens-protocol/wagmi'
 import { ThemeProvider as NextThemesProvider } from 'next-themes'
 import { NextUIProvider } from '@nextui-org/react'
+import { type Chain, defineChain } from 'viem'
 import { Network } from '@/constants/contracts'
 
 // Define the Lens Network chain
-const lensChain = {
+const lensChain = defineChain({
   id: Network.LENS.id,
   name: Network.LENS.name,
-  network: 'lens-testnet',
-  nativeCurrency: Network.LENS.nativeCurrency,
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Sepolia Ether',
+    symbol: 'ETH',
+  },
   rpcUrls: {
-    default: {
-      http: [Network.LENS.rpcUrl],
-    },
-    public: {
-      http: [Network.LENS.rpcUrl],
-    },
+    default: { http: ['https://rpc.testnet.lens.dev'] },
   },
   blockExplorers: {
-    default: {
-      name: 'Lens Explorer',
-      url: Network.LENS.blockExplorer,
-    },
+    default: { name: 'Explorer', url: 'https://testnet.lensscan.xyz' },
   },
-};
-const config = createConfig(
-  getDefaultConfig({
-    appName: 'Bounty Board',
-    appDescription: 'A decentralized bounty marketplace powered by Lens Protocol',
-    appUrl: 'https://bountiesboard.xyz',
-    appIcon: '/logo.png',
+  testnet: true,
+})
 
-    chains: [lensChain],
-    transports: {
-      [lensChain.id]: http(Network.LENS.rpcUrl),
-    },
+const config = createConfig({
+  chains: [lensChain],
+  transports: {
+    [lensChain.id]: http(),
+  },
+  ssr: true,
+})
 
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '',
-  }),
-)
+const lensConfig: LensConfig = {
+  bindings: bindings(config),
+  environment: development,
+}
 
 const queryClient = new QueryClient()
 
-const lensConfig: LensConfig = {
-  environment: development,
-  bindings: bindings(config),
-}
-
-type ProvidersProps = {
+export interface ProvidersProps {
   children: React.ReactNode
 }
 
-export function Providers({ children }: ProvidersProps) {
+export default function Providers({ children }: ProvidersProps) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={config}>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
         <ConnectKitProvider>
-          <NextThemesProvider attribute="class" defaultTheme="dark">
+          <LensProvider config={lensConfig}>
             <NextUIProvider>
-              <LensProvider config={lensConfig}>
+              <NextThemesProvider attribute="class" defaultTheme="dark">
                 {children}
-              </LensProvider>
+              </NextThemesProvider>
             </NextUIProvider>
-          </NextThemesProvider>
+          </LensProvider>
         </ConnectKitProvider>
-      </WagmiProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   )
 }

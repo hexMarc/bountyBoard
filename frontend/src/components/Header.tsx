@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenuToggle, NavbarMenu, NavbarMenuItem, Link } from '@nextui-org/react'
-import { useAccount } from 'wagmi'
+import { Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenuToggle, NavbarMenu, NavbarMenuItem, Link, Button } from '@nextui-org/react'
+import { useAccount, useWriteContract, useTransaction, useChainId, useSwitchChain } from 'wagmi'
 import { ConnectKitButton } from 'connectkit'
+import { parseEther } from 'viem'
+import { Network } from '@/constants/contracts'
 
 const navigation = [
   { name: 'Dashboard', href: '/' },
@@ -14,9 +16,56 @@ const navigation = [
 ]
 
 export default function Header() {
-  const { isConnected } = useAccount()
+  const { isConnected, address } = useAccount()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
+  const chainId = useChainId()
+  const { switchChain, isPending: isSwitching } = useSwitchChain()
+
+  const { writeContract: mint, data: mintData } = useWriteContract()
+
+  const { isLoading: isMinting } = useTransaction({
+    hash: mintData,
+  })
+
+  const handleMint = async () => {
+    if (!address) return
+    
+    try {
+      // Switch to Lens Network if not already on it
+      if (chainId !== Network.LENS.id) {
+        await switchChain({ chainId: Network.LENS.id })
+        return // Will retry after chain switch
+      }
+      
+      mint({
+        address: '0xAD60B865A87Bb0e7224027912D771f360aF02e4A', // Replace with actual deployed address
+        abi: [{
+          name: 'mint',
+          type: 'function',
+          stateMutability: 'nonpayable',
+          inputs: [
+            { name: 'to', type: 'address' },
+            { name: 'amount', type: 'uint256' }
+          ],
+          outputs: []
+        }],
+        functionName: 'mint',
+        args: [address, parseEther('10000')] // Minting 10000 GRASS tokens
+      })
+    } catch (error) {
+      console.error('Error minting:', error)
+    }
+  }
+
+  const isLoading = isMinting || isSwitching
+  const buttonText = isSwitching 
+    ? 'Switching Network...' 
+    : isMinting 
+      ? 'Minting...' 
+      : chainId !== Network.LENS.id 
+        ? 'Switch to Lens Network' 
+        : 'Mint GRASS'
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
@@ -81,6 +130,18 @@ export default function Header() {
         </NavbarContent>
 
         <NavbarContent justify="end" className="basis-1/5 sm:basis-auto gap-4">
+          {isConnected && (
+            <NavbarItem className="hidden sm:flex">
+              <Button
+                color="primary"
+                variant="flat"
+                onClick={handleMint}
+                isLoading={isLoading}
+              >
+                {buttonText}
+              </Button>
+            </NavbarItem>
+          )}
           <NavbarItem className="hidden sm:flex">
             <ConnectKitButton />
           </NavbarItem>
@@ -104,6 +165,17 @@ export default function Header() {
           ))}
           <NavbarMenuItem className="mt-8 pb-6 border-t border-foreground/10 pt-6">
             <div className="flex flex-col gap-4 w-full">
+              {isConnected && (
+                <Button
+                  color="primary"
+                  variant="flat"
+                  onClick={handleMint}
+                  isLoading={isLoading}
+                  className="w-full"
+                >
+                  {buttonText}
+                </Button>
+              )}
               <ConnectKitButton />
             </div>
           </NavbarMenuItem>
