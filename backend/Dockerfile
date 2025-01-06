@@ -1,9 +1,8 @@
-FROM golang:1.23.3-alpine
+# Use the official Golang image
+FROM golang:1.22-alpine AS builder
 
+# Set the working directory
 WORKDIR /app
-
-# Install build dependencies
-RUN apk add --no-cache git
 
 # Copy go mod and sum files
 COPY go.mod go.sum ./
@@ -11,14 +10,24 @@ COPY go.mod go.sum ./
 # Download all dependencies
 RUN go mod download
 
-# Copy the source code
+# Copy the source from the current directory to the working Directory inside the container
 COPY . .
 
-# Build the application
-RUN go build -o main .
+# Build the Go app
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-# Expose port 8080
+# Start a new stage from scratch
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+
+# Copy the Pre-built binary file from the previous stage
+COPY --from=builder /app/main .
+
+# Expose port 8080 to the outside world
 EXPOSE 8080
 
-# Command to run the application
+# Command to run the executable
 CMD ["./main"]

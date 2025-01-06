@@ -26,7 +26,7 @@ VALUES
 -- Insert Bounties
 INSERT INTO bounties (
   title, description, reward, creator_id, hunter_id, status, 
-  deadline, created_at, updated_at, tx_hash, ipfs_hash
+  deadline, created_at, updated_at, tx_hash
 )
 VALUES 
   (
@@ -39,8 +39,7 @@ VALUES
     '2025-02-06 17:26:43',
     '2025-01-06 17:26:43',
     '2025-01-06 17:26:43',
-    '0xtx1...789',
-    'ipfs://bounty1'
+    '0xtx1...789'
   ),
   (
     'Frontend Development for DEX', 
@@ -52,8 +51,7 @@ VALUES
     '2025-03-06 17:26:43',
     '2025-01-06 17:26:43',
     '2025-01-06 17:26:43',
-    '0xtx2...012',
-    'ipfs://bounty2'
+    '0xtx2...012'
   ),
   (
     'Gas Optimization Challenge', 
@@ -65,13 +63,12 @@ VALUES
     '2025-02-20 17:26:43',
     '2025-01-06 17:26:43',
     '2025-01-06 17:26:43',
-    '0xtx3...345',
-    'ipfs://bounty3'
+    '0xtx3...345'
   );
 
 -- Insert Bounty Submissions
 INSERT INTO bounty_submissions (
-  bounty_id, hunter_id, content, ipfs_hash, status, 
+  bounty_id, hunter_id, content, status, 
   created_at, updated_at
 )
 VALUES 
@@ -79,7 +76,6 @@ VALUES
     1,
     'u2',
     'Completed security audit report with 5 high-severity findings and mitigation suggestions',
-    'ipfs://submission1',
     'accepted',
     '2025-01-06 17:26:43',
     '2025-01-06 17:26:43'
@@ -88,7 +84,6 @@ VALUES
     3,
     'u1',
     'Initial submission with 20% gas reduction achieved',
-    'ipfs://submission2',
     'pending',
     '2025-01-06 17:26:43',
     '2025-01-06 17:26:43'
