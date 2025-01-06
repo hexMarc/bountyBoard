@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Header from '@/components/Header'
 import { useProfile } from '@lens-protocol/react-web'
 import { format } from 'date-fns'
+import { Card, CardBody, Button, Chip, Spinner } from '@nextui-org/react'
+import { motion } from 'framer-motion'
 
 interface Bounty {
   id: number
@@ -14,6 +16,7 @@ interface Bounty {
   hunterId: string | null
   status: string
   deadline: string
+  ipfsHash: string
 }
 
 export default function BountiesPage() {
@@ -30,6 +33,10 @@ export default function BountiesPage() {
         }
 
         const response = await fetch(url.toString())
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to fetch bounties')
+        }
         const data = await response.json()
         setBounties(data)
         setLoading(false)
@@ -42,145 +49,127 @@ export default function BountiesPage() {
     fetchBounties()
   }, [filter])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'bg-green-100 text-green-800'
-      case 'claimed':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'completed':
-        return 'bg-blue-100 text-blue-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
   return (
     <div className="min-h-screen">
       <Header />
       
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 sm:px-0">
-          <div className="sm:flex sm:items-center">
+      <main className="max-w-7xl mx-auto pt-24 pb-6 sm:px-6 lg:px-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="px-4 sm:px-0"
+        >
+          <div className="sm:flex sm:items-center mb-8">
             <div className="sm:flex-auto">
-              <h1 className="text-3xl font-semibold text-gray-900">Bounties</h1>
-              <p className="mt-2 text-sm text-gray-700">
+              <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500">
+                Bounties
+              </h1>
+              <p className="mt-2 text-foreground/70">
                 Browse available bounties and start earning rewards
               </p>
             </div>
             <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-              <a
+              <Button
+                as="a"
                 href="/bounties/create"
-                className="btn-primary"
+                color="primary"
+                variant="shadow"
+                size="lg"
               >
                 Create Bounty
-              </a>
+              </Button>
             </div>
           </div>
 
-          <div className="mt-8">
-            <div className="sm:flex sm:items-center">
-              <div className="sm:flex-auto">
-                <div className="flex gap-4">
-                  {['all', 'open', 'claimed', 'completed'].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => setFilter(status)}
-                      className={`px-3 py-2 rounded-md text-sm font-medium ${
-                        filter === status
-                          ? 'bg-gray-900 text-white'
-                          : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                      }`}
+          <Card 
+            className="w-full"
+            classNames={{
+              base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg border-1 border-white/20",
+            }}
+          >
+            <CardBody>
+              <div className="flex gap-4 mb-6">
+                {['all', 'open', 'claimed', 'completed'].map((status) => (
+                  <Button
+                    key={status}
+                    size="sm"
+                    variant={filter === status ? "shadow" : "flat"}
+                    color={filter === status ? "primary" : "default"}
+                    onPress={() => setFilter(status)}
+                  >
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </Button>
+                ))}
+              </div>
+
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Spinner size="lg" />
+                </div>
+              ) : (
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  {bounties.map((bounty) => (
+                    <motion.div
+                      key={bounty.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
                     >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </button>
+                      <Card 
+                        isPressable
+                        as="a"
+                        href={`/bounties/${bounty.id}`}
+                        className="w-full h-full"
+                        classNames={{
+                          base: [
+                            "bg-background/40",
+                            "dark:bg-default-100/20",
+                            "backdrop-blur-lg",
+                            "border-1",
+                            "border-white/20",
+                            "hover:border-white/40",
+                            "transition-all",
+                            "duration-300",
+                            "hover:-translate-y-1"
+                          ].join(" ")
+                        }}
+                      >
+                        <CardBody className="p-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-xl font-semibold">
+                              {bounty.title}
+                            </h3>
+                            <Chip
+                              color={bounty.status === 'open' ? "success" : 
+                                    bounty.status === 'claimed' ? "warning" : 
+                                    "primary"}
+                              variant="shadow"
+                              size="sm"
+                            >
+                              {bounty.status}
+                            </Chip>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <Chip
+                              variant="flat"
+                              className="bg-white/10"
+                            >
+                              {bounty.reward} GRASS
+                            </Chip>
+                            <span className="text-sm text-foreground/70">
+                              {format(new Date(bounty.deadline), 'PPP')}
+                            </span>
+                          </div>
+                        </CardBody>
+                      </Card>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="mt-8 text-center">Loading bounties...</div>
-            ) : (
-              <div className="mt-8 flex flex-col">
-                <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                  <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                    <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                      <table className="min-w-full divide-y divide-gray-300">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th
-                              scope="col"
-                              className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                            >
-                              Title
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                            >
-                              Reward
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                            >
-                              Status
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                            >
-                              Deadline
-                            </th>
-                            <th
-                              scope="col"
-                              className="relative py-3.5 pl-3 pr-4 sm:pr-6"
-                            >
-                              <span className="sr-only">Actions</span>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 bg-white">
-                          {bounties.map((bounty) => (
-                            <tr key={bounty.id}>
-                              <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                                {bounty.title}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                {bounty.reward} GRASS
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                <span
-                                  className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusColor(
-                                    bounty.status
-                                  )}`}
-                                >
-                                  {bounty.status}
-                                </span>
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                {format(new Date(bounty.deadline), 'PPP')}
-                              </td>
-                              <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                <a
-                                  href={`/bounties/${bounty.id}`}
-                                  className="text-primary-600 hover:text-primary-900"
-                                >
-                                  View<span className="sr-only">, {bounty.title}</span>
-                                </a>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+              )}
+            </CardBody>
+          </Card>
+        </motion.div>
       </main>
     </div>
   )

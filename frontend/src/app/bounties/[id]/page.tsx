@@ -8,6 +8,8 @@ import { parseEther } from 'viem'
 import { format } from 'date-fns'
 import { BOUNTY_BOARD_ABI } from '@/lib/contracts/abis'
 import { useProfile } from '@lens-protocol/react-web'
+import { Card, CardBody, CardHeader, Button, Chip, Textarea, Spinner, Divider } from '@nextui-org/react'
+import { motion } from 'framer-motion'
 
 interface Bounty {
   id: number
@@ -131,19 +133,8 @@ export default function BountyDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <Header />
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
-            <div className="space-y-4">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            </div>
-          </div>
-        </main>
+      <div className="flex justify-center items-center py-20">
+        <Spinner size="lg" />
       </div>
     )
   }
@@ -158,160 +149,181 @@ export default function BountyDetail() {
     <div className="min-h-screen">
       <Header />
       
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {/* Bounty Details Card */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
-            <div className="px-4 py-5 sm:px-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    {bounty.title}
-                  </h3>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    Posted by {creatorProfile?.handle?.fullHandle || bounty.creatorId}
-                  </p>
-                </div>
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                  ${bounty.status === 'open' ? 'bg-green-100 text-green-800' : 
-                    bounty.status === 'claimed' ? 'bg-yellow-100 text-yellow-800' : 
-                    'bg-blue-100 text-blue-800'}`}>
-                  {bounty.status}
-                </span>
+      <main className="max-w-7xl mx-auto pt-24 pb-6 sm:px-6 lg:px-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="px-4 py-6 sm:px-0"
+        >
+          <Card 
+            className="w-full mb-8"
+            classNames={{
+              base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg border-1 border-white/20",
+            }}
+          >
+            <CardHeader className="flex justify-between items-start px-6 pt-6">
+              <div>
+                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500">
+                  {bounty.title}
+                </h1>
+                <p className="mt-1 text-foreground/70">
+                  Posted by {creatorProfile?.handle?.fullHandle || bounty.creatorId}
+                </p>
               </div>
-            </div>
+              <Chip
+                color={bounty.status === 'open' ? "success" : 
+                      bounty.status === 'claimed' ? "warning" : 
+                      "primary"}
+                variant="shadow"
+              >
+                {bounty.status}
+              </Chip>
+            </CardHeader>
             
-            <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <dt className="text-sm font-medium text-gray-500">Description</dt>
-                  <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{bounty.description}</dd>
-                </div>
-
+            <CardBody className="px-6">
+              <div className="space-y-6">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Reward</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{bounty.reward} GRASS</dd>
+                  <h3 className="text-lg font-semibold mb-2">Description</h3>
+                  <p className="text-foreground/70 whitespace-pre-wrap">{bounty.description}</p>
                 </div>
 
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Deadline</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {format(new Date(bounty.deadline), 'PPP')}
-                  </dd>
-                </div>
-
-                {bounty.hunterId && (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Claimed by</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      {hunterProfile?.handle?.fullHandle || bounty.hunterId}
-                    </dd>
+                    <h3 className="text-lg font-semibold mb-2">Reward</h3>
+                    <Chip variant="flat" className="bg-white/10">
+                      {bounty.reward} GRASS
+                    </Chip>
                   </div>
-                )}
 
-                {bounty.txHash && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Transaction</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      <a 
+                    <h3 className="text-lg font-semibold mb-2">Deadline</h3>
+                    <p className="text-foreground/70">
+                      {format(new Date(bounty.deadline), 'PPP')}
+                    </p>
+                  </div>
+
+                  {bounty.hunterId && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Claimed by</h3>
+                      <p className="text-foreground/70">
+                        {hunterProfile?.handle?.fullHandle || bounty.hunterId}
+                      </p>
+                    </div>
+                  )}
+
+                  {bounty.txHash && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Transaction</h3>
+                      <Button
+                        as="a"
                         href={`${process.env.NEXT_PUBLIC_BLOCK_EXPLORER_URL}/tx/${bounty.txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary-600 hover:text-primary-900"
+                        variant="flat"
+                        color="primary"
+                        size="sm"
                       >
                         View on Explorer
-                      </a>
-                    </dd>
-                  </div>
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <Divider className="my-6" />
+
+                {bounty.status === 'open' && !isCreator && (
+                  <Button
+                    color="primary"
+                    variant="shadow"
+                    size="lg"
+                    onPress={handleClaimBounty}
+                    isDisabled={!isConnected}
+                    className="w-full"
+                  >
+                    Claim Bounty
+                  </Button>
                 )}
-              </dl>
-            </div>
 
-            <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-              {bounty.status === 'open' && !isCreator && (
-                <button
-                  onClick={handleClaimBounty}
-                  className="btn-primary"
-                  disabled={!isConnected}
-                >
-                  Claim Bounty
-                </button>
-              )}
-
-              {bounty.status === 'claimed' && isHunter && (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label htmlFor="submission" className="block text-sm font-medium text-gray-700">
-                      Submit Work
-                    </label>
-                    <textarea
-                      id="submission"
-                      name="submission"
-                      rows={4}
-                      className="input-primary mt-1"
+                {bounty.status === 'claimed' && isHunter && (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <Textarea
+                      label="Submit Work"
+                      placeholder="Describe your work and include any relevant links or documentation..."
                       value={submission}
                       onChange={(e) => setSubmission(e.target.value)}
-                      placeholder="Describe your work and include any relevant links or documentation..."
+                      minRows={4}
                       required
                     />
-                  </div>
-                  <button type="submit" className="btn-primary">
-                    Submit Work
-                  </button>
-                </form>
-              )}
+                    <Button
+                      type="submit"
+                      color="primary"
+                      variant="shadow"
+                      size="lg"
+                      className="w-full"
+                    >
+                      Submit Work
+                    </Button>
+                  </form>
+                )}
 
-              {canComplete && (
-                <button
-                  onClick={handleCompleteBounty}
-                  className="btn-primary"
-                >
-                  Complete Bounty
-                </button>
-              )}
-            </div>
-          </div>
+                {canComplete && (
+                  <Button
+                    color="primary"
+                    variant="shadow"
+                    size="lg"
+                    onPress={handleCompleteBounty}
+                    className="w-full"
+                  >
+                    Complete Bounty
+                  </Button>
+                )}
+              </div>
+            </CardBody>
+          </Card>
 
           {/* Submissions Section */}
           {submissions.length > 0 && (
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-              <div className="px-4 py-5 sm:px-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900">
-                  Submissions
-                </h3>
-              </div>
-              <div className="border-t border-gray-200">
-                <ul className="divide-y divide-gray-200">
+            <Card 
+              className="w-full"
+              classNames={{
+                base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg border-1 border-white/20",
+              }}
+            >
+              <CardHeader className="px-6 pt-6">
+                <h2 className="text-2xl font-bold">Submissions</h2>
+              </CardHeader>
+              <CardBody className="px-6">
+                <div className="space-y-6">
                   {submissions.map((sub) => (
-                    <li key={sub.id} className="px-4 py-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="text-sm font-medium text-gray-900">
-                            {sub.hunterId}
-                          </div>
-                          <div className="ml-2 flex-shrink-0">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                              ${sub.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                                sub.status === 'accepted' ? 'bg-green-100 text-green-800' : 
-                                'bg-red-100 text-red-800'}`}>
-                              {sub.status}
-                            </span>
-                          </div>
+                    <div key={sub.id} className="border-b border-white/10 last:border-0 pb-6 last:pb-0">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-foreground/90">{sub.hunterId}</span>
+                          <Chip
+                            size="sm"
+                            color={sub.status === 'pending' ? "warning" : 
+                                  sub.status === 'accepted' ? "success" : 
+                                  "danger"}
+                            variant="flat"
+                          >
+                            {sub.status}
+                          </Chip>
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <span className="text-sm text-foreground/50">
                           {format(new Date(sub.createdAt), 'PPP')}
-                        </div>
+                        </span>
                       </div>
-                      <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">
+                      <p className="text-foreground/70 whitespace-pre-wrap">
                         {sub.content}
-                      </div>
-                    </li>
+                      </p>
+                    </div>
                   ))}
-                </ul>
-              </div>
-            </div>
+                </div>
+              </CardBody>
+            </Card>
           )}
-        </div>
+        </motion.div>
       </main>
     </div>
   )

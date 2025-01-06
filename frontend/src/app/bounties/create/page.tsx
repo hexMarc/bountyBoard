@@ -5,16 +5,54 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import { useAccount } from 'wagmi'
 import { parseEther } from 'viem'
+import { Card, CardBody, CardHeader, Button, Input, Textarea } from '@nextui-org/react'
+import { motion } from 'framer-motion'
+
+interface FormData {
+  title: string
+  description: string
+  reward: string
+  deadline: string
+}
 
 export default function CreateBounty() {
   const router = useRouter()
-  const { isConnected } = useAccount()
-  const [formData, setFormData] = useState({
+  const { isConnected, address } = useAccount()
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
     reward: '',
     deadline: ''
   })
+  const [errors, setErrors] = useState<Partial<FormData>>({})
+
+  const validateForm = () => {
+    const newErrors: Partial<FormData> = {}
+    
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required'
+    }
+    
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required'
+    }
+    
+    if (!formData.reward || parseFloat(formData.reward) <= 0) {
+      newErrors.reward = 'Valid reward amount is required'
+    }
+    
+    if (!formData.deadline) {
+      newErrors.deadline = 'Deadline is required'
+    } else {
+      const deadlineDate = new Date(formData.deadline)
+      if (deadlineDate <= new Date()) {
+        newErrors.deadline = 'Deadline must be in the future'
+      }
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,21 +62,30 @@ export default function CreateBounty() {
       return
     }
 
+    if (!validateForm()) {
+      return
+    }
+
     try {
-      // Create bounty through API
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        reward: formData.reward,
+        deadline: new Date(formData.deadline).toISOString(),
+        creatorId: address
+      }
+
       const response = await fetch(`http://localhost:8080/api/v1/bounties`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          reward: parseEther(formData.reward).toString()
-        })
+        body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
-        throw new Error('Failed to create bounty')
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create bounty')
       }
 
       router.push('/bounties')
@@ -50,95 +97,167 @@ export default function CreateBounty() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
+    
+    // Clear error when user starts typing
+    setErrors(prev => ({ ...prev, [name]: undefined }))
+    
+    // For reward field, ensure valid decimal values
+    if (name === 'reward') {
+      const floatValue = parseFloat(value)
+      if (isNaN(floatValue)) {
+        setFormData(prev => ({ ...prev, [name]: '' }))
+        return
+      }
+      setFormData(prev => ({ ...prev, [name]: floatValue.toFixed(2) }))
+      return
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
     }))
   }
 
+  // Set minimum date to current date
+  const minDate = new Date()
+  minDate.setMinutes(minDate.getMinutes() - minDate.getTimezoneOffset())
+  const minDateString = minDate.toISOString().slice(0, 16)
+
   return (
     <div className="min-h-screen">
       <Header />
       
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      <main className="max-w-7xl mx-auto pt-24 pb-6 sm:px-6 lg:px-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="px-4 py-6 sm:px-0"
+        >
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-3xl font-bold mb-8">Create New Bounty</h1>
+            <h1 className="text-4xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500">
+              Create New Bounty
+            </h1>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  id="title"
-                  required
-                  className="input-primary mt-1"
-                  value={formData.title}
-                  onChange={handleChange}
-                />
-              </div>
+            <Card
+              className="w-full"
+              classNames={{
+                base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg border-1 border-white/20",
+              }}
+            >
+              <CardBody className="p-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-1">
+                      Title
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      required
+                      variant="bordered"
+                      placeholder="Enter a descriptive title for your bounty"
+                      classNames={{
+                        input: "pt-0",
+                        inputWrapper: "pt-0"
+                      }}
+                      isInvalid={!!errors.title}
+                      errorMessage={errors.title}
+                    />
+                    <p className="text-sm text-foreground/70">A clear and concise title for your bounty</p>
+                  </div>
 
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  id="description"
-                  rows={4}
-                  required
-                  className="input-primary mt-1"
-                  value={formData.description}
-                  onChange={handleChange}
-                />
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-1">
+                      Description
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <Textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      required
+                      minRows={4}
+                      variant="bordered"
+                      placeholder="Describe the task in detail, including any requirements or specifications"
+                      classNames={{
+                        input: "pt-0",
+                        inputWrapper: "pt-0"
+                      }}
+                      isInvalid={!!errors.description}
+                      errorMessage={errors.description}
+                    />
+                    <p className="text-sm text-foreground/70">Provide detailed information about the bounty requirements</p>
+                  </div>
 
-              <div>
-                <label htmlFor="reward" className="block text-sm font-medium text-gray-700">
-                  Reward (GRASS)
-                </label>
-                <input
-                  type="number"
-                  name="reward"
-                  id="reward"
-                  required
-                  step="0.000000000000000001"
-                  className="input-primary mt-1"
-                  value={formData.reward}
-                  onChange={handleChange}
-                />
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-1">
+                      Reward (GRASS)
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="number"
+                      name="reward"
+                      value={formData.reward}
+                      onChange={handleChange}
+                      required
+                      min="0.01"
+                      step="0.01"
+                      variant="bordered"
+                      placeholder="Enter the reward amount in GRASS"
+                      classNames={{
+                        input: "pt-0",
+                        inputWrapper: "pt-0"
+                      }}
+                      isInvalid={!!errors.reward}
+                      errorMessage={errors.reward}
+                    />
+                    <p className="text-sm text-foreground/70">Specify the amount of GRASS tokens to reward (e.g., 1.25)</p>
+                  </div>
 
-              <div>
-                <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
-                  Deadline
-                </label>
-                <input
-                  type="datetime-local"
-                  name="deadline"
-                  id="deadline"
-                  required
-                  className="input-primary mt-1"
-                  value={formData.deadline}
-                  onChange={handleChange}
-                />
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-1">
+                      Deadline
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      name="deadline"
+                      value={formData.deadline}
+                      onChange={handleChange}
+                      required
+                      variant="bordered"
+                      min={minDateString}
+                      classNames={{
+                        input: "pt-0",
+                        inputWrapper: "pt-0",
+                        base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg",
+                        innerWrapper: "bg-transparent",
+                      }}
+                      isInvalid={!!errors.deadline}
+                      errorMessage={errors.deadline}
+                    />
+                    <p className="text-sm text-foreground/70">Set a deadline for the bounty completion</p>
+                  </div>
 
-              <div>
-                <button
-                  type="submit"
-                  className="btn-primary w-full"
-                  disabled={!isConnected}
-                >
-                  Create Bounty
-                </button>
-              </div>
-            </form>
+                  <Button
+                    type="submit"
+                    color="primary"
+                    variant="shadow"
+                    size="lg"
+                    isDisabled={!isConnected}
+                    className="w-full mt-8"
+                  >
+                    Create Bounty
+                  </Button>
+                </form>
+              </CardBody>
+            </Card>
           </div>
-        </div>
+        </motion.div>
       </main>
     </div>
   )
