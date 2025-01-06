@@ -1,6 +1,7 @@
-import { useLogin, useLogout, useProfile } from '@lens-protocol/react-web';
+import { useLogin, useLogout, useProfile, useCreateProfile, Profile } from '@lens-protocol/react-web';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { injected } from '@wagmi/core';
+import { useState, useEffect } from 'react';
 
 export type LoginError = {
   message: string;
@@ -10,13 +11,30 @@ export type LoginError = {
 export const useLensAuth = () => {
   const { execute: login, error: loginError, loading: loginLoading } = useLogin();
   const { execute: logout, loading: logoutLoading } = useLogout();
-  // const { data: profile, loading: profileLoading } = useProfile();
   const { isConnected, address } = useAccount();
   const { connectAsync } = useConnect();
   const { disconnectAsync } = useDisconnect();
+  const [needsNewProfile, setNeedsNewProfile] = useState(false);
+
+  // Pass the required handle argument to useProfile
+  const { data: profile, loading: profileLoading } = useProfile({
+    forHandle: address ? `user_${address.toLowerCase().slice(2, 8)}` : null
+  });
+
+  // Use the task from useCreateProfile
+  const createProfileTask = useCreateProfile();
+
+  useEffect(() => {
+    // Check if user needs to create a profile when they connect
+    if (isConnected && !profileLoading && !profile) {
+      setNeedsNewProfile(true);
+    } else {
+      setNeedsNewProfile(false);
+    }
+  }, [isConnected, profile, profileLoading]);
 
   const signIn = async () => {
-    if (!isConnected) {
+    if (!isConnected || !address) {
       try {
         const result = await connectAsync({ connector: injected() });
         if (!result?.accounts[0]) throw new Error('No accounts found');
@@ -26,7 +44,9 @@ export const useLensAuth = () => {
     }
 
     try {
-      // await login();
+      await login({
+        address: address as `0x${string}`,
+      });
     } catch (error: any) {
       throw new Error(error.message);
     }
@@ -41,14 +61,34 @@ export const useLensAuth = () => {
     }
   };
 
+  const handleCreateProfile = async (handle: string) => {
+    if (!address) throw new Error('No wallet connected');
+    
+    try {
+      const result = await createProfileTask.execute({
+        localName: handle,
+        to: address,
+      });
+      return result;
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  };
+
   return {
-    // profile,
+    profile,
     signIn,
     signOut,
+    handleCreateProfile,
     isConnected,
     address,
-    // isAuthenticated: !!profile,
+    isAuthenticated: !!profile,
     loginError,
-    loading: loginLoading || logoutLoading,
+    loginLoading,
+    logoutLoading,
+    profileLoading,
+    createProfileLoading: createProfileTask.loading,
+    createProfileError: createProfileTask.error,
+    needsNewProfile
   };
 };

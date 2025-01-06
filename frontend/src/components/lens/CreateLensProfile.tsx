@@ -1,132 +1,66 @@
 import { useState } from 'react';
-import { useCreateProfile, useProfile, useLogin } from '@lens-protocol/react-web';
-import type { Profile } from '@lens-protocol/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useAccount } from 'wagmi';
-import { ConnectKitButton } from 'connectkit';
+import { useLensAuth } from '@/hooks/useLensAuth';
+import { Button, Input, Card, CardBody } from '@nextui-org/react';
 
 export const CreateLensProfile = () => {
   const [handle, setHandle] = useState('');
-  const { execute: createProfile, error: createError, loading: createLoading } = useCreateProfile();
-  const { execute: login, error: loginError } = useLogin();
-  const { address, isConnected } = useAccount();
-  const { data: profile, loading: profileLoading } = useProfile({
-    forHandle: handle,
-    // handle: handle ? `${handle}.lens` : null
-  });
+  const { handleCreateProfile, createProfileLoading, createProfileError } = useLensAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isConnected) return;
-
     try {
-      // First create the profile
-      // const result = await createProfile({ handle });
-      // if (result.isFailure()) {
-      //   throw new Error(result.error.message);
-      // }
-
-      // // Wait for indexing
-      // const waitForIndexing = async () => {
-      //   const newProfile = await result.value.waitForCompletion();
-      //   if (newProfile.isFailure()) {
-      //     throw new Error('Failed to index profile');
-      //   }
-        
-      //   // Login with the new profile
-      //   const loginResult = await login();
-      //   if (loginResult.isFailure()) {
-      //     throw new Error('Failed to login with new profile');
-      //   }
-      // };
-
-      // await waitForIndexing();
-    } catch (err) {
-      console.error('Failed to create profile:', err);
+      await handleCreateProfile(handle);
+    } catch (error) {
+      console.error('Error creating profile:', error);
     }
   };
 
-  if (!isConnected) {
-    return (
-      <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
-        <h2 className="text-2xl font-bold mb-6">Connect Wallet</h2>
-        <p className="mb-4 text-gray-600">Connect your wallet to create a Lens profile</p>
-        <ConnectKitButton />
-      </div>
-    );
-  }
-
-  if (profile) {
-    return (
-      <div className="p-4 bg-green-50 rounded-lg">
-        {/* <Alert>
-          <AlertTitle>Profile Found</AlertTitle>
-          <AlertDescription>
-            The handle @{profile.handle} is already taken. Please try a different handle.
-          </AlertDescription>
-        </Alert> */}
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold mb-6">Create Lens Profile</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="handle" className="block text-sm font-medium text-gray-700">
-            Choose your handle
-          </label>
-          <div className="mt-1 relative">
-            <Input
-              id="handle"
-              type="text"
-              value={handle}
-              onChange={(e) => setHandle(e.target.value.toLowerCase())}
-              placeholder="your-handle"
-              className="block w-full pr-12"
-              required
-              pattern="^[a-z0-9][a-z0-9-]{1,30}[a-z0-9]$"
-              title="Handle must be lowercase alphanumeric, can include hyphens, and be between 3-32 characters"
-            />
-            <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">
-              .lens
-            </span>
-          </div>
-          <p className="mt-1 text-sm text-gray-500">
-            Only lowercase letters, numbers, and hyphens allowed
-          </p>
-        </div>
-
-        {(createError || loginError) && (
-          <Alert variant="destructive">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              {createError?.message || loginError?.message}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <Button
-          type="submit"
-          disabled={createLoading || profileLoading || !handle || !isConnected}
-          className="w-full"
-        >
-          {createLoading ? 'Creating...' : 'Create Profile'}
-        </Button>
-      </form>
-
-      <div className="mt-4 text-sm text-gray-600">
-        <p>By creating a profile, you'll be able to:</p>
-        <ul className="list-disc list-inside mt-2">
-          <li>Create and manage bounties</li>
-          <li>Build your reputation</li>
-          <li>Earn badges as NFTs</li>
-          <li>Interact with other creators</li>
-        </ul>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-background">
+      <Card className="w-full max-w-md bg-background/40 dark:bg-default-100/20 backdrop-blur-lg border-1 border-white/20">
+        <CardBody className="p-6">
+          <h2 className="text-2xl font-bold mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500">
+            Create Your Lens Profile
+          </h2>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div>
+              <Input
+                label="Choose your handle"
+                value={handle}
+                onChange={(e) => setHandle(e.target.value.toLowerCase())}
+                placeholder="yourname"
+                endContent={<span className="text-default-400">.lens</span>}
+                variant="bordered"
+                classNames={{
+                  input: "bg-transparent",
+                  innerWrapper: "bg-transparent",
+                  inputWrapper: [
+                    "bg-default-100/20",
+                    "hover:bg-default-200/20",
+                    "group-data-[focused=true]:bg-default-200/20",
+                    "!cursor-text",
+                  ],
+                }}
+              />
+            </div>
+            {createProfileError && (
+              <div className="bg-danger-50 border border-danger-200 text-danger-600 px-4 py-3 rounded relative" role="alert">
+                <p className="text-sm">{createProfileError.message}</p>
+              </div>
+            )}
+            <Button
+              type="submit"
+              isDisabled={createProfileLoading || !handle}
+              isLoading={createProfileLoading}
+              color="primary"
+              className="w-full"
+              size="lg"
+            >
+              {createProfileLoading ? 'Creating...' : 'Create Profile'}
+            </Button>
+          </form>
+        </CardBody>
+      </Card>
     </div>
   );
 };
