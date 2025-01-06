@@ -24,7 +24,7 @@ export default function BountiesPage() {
   useEffect(() => {
     const fetchBounties = async () => {
       try {
-        const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/bounties`)
+        const url = new URL(`http://localhost:8080/api/v1/bounties`)
         if (filter !== 'all') {
           url.searchParams.append('status', filter)
         }

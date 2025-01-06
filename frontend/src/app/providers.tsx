@@ -11,6 +11,8 @@ import {
 import { bindings as wagmiBindings } from '@lens-protocol/wagmi'
 import { chains } from "@lens-network/sdk/viem";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { NextUIProvider } from '@nextui-org/react'
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 const queryClient = new QueryClient()
 
@@ -22,7 +24,7 @@ const config = createConfig(
     transports: {
       [chains.testnet.id]: http()
     },
-    // Optional parameters
+    // Optional configuration
     walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '',
   })
 )
@@ -37,9 +39,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={config}>
         <ConnectKitProvider>
-          <LensProvider config={lensConfig}>
-            {children}
-          </LensProvider>
+          <NextThemesProvider attribute="class" defaultTheme="dark">
+            <NextUIProvider>
+              <LensProvider config={lensConfig}>
+                {children}
+              </LensProvider>
+            </NextUIProvider>
+          </NextThemesProvider>
         </ConnectKitProvider>
       </WagmiProvider>
     </QueryClientProvider>

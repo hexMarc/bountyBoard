@@ -51,14 +51,14 @@ export default function Profile() {
       try {
         // Fetch created bounties
         const createdResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/bounties?creator=${userId}`
+          `http://localhost:8080/api/v1/bounties?creator=${userId}`
         )
         const createdData = await createdResponse.json()
         setCreatedBounties(createdData)
 
         // Fetch claimed bounties
         const claimedResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/bounties?hunter=${userId}`
+          `http://localhost:8080/api/v1/bounties?hunter=${userId}`
         )
         const claimedData = await claimedResponse.json()
         setClaimedBounties(claimedData)

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Header from '@/components/Header'
-import { Button } from '@/components/ui/button'
 import { useLensAuth } from '@/hooks/useLensAuth'
+import { Card, CardBody, CardFooter, Button, Spinner, Chip } from '@nextui-org/react'
+import { motion } from 'framer-motion'
 
 export default function Home() {
   const [bounties, setBounties] = useState([])
@@ -12,7 +13,7 @@ export default function Home() {
   useEffect(() => {
     const fetchBounties = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/bounties`)
+        const response = await fetch(`http://localhost:8080/api/v1/bounties`)
         const data = await response.json()
         setBounties(data)
       } catch (error) {
@@ -35,48 +36,133 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <>
       <Header />
-      
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center min-h-[70vh] animate-fadeIn">
-          <div className="relative mb-12">
-            <div className="absolute -inset-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-2xl blur opacity-25"></div>
-            <div className="relative bg-white rounded-xl shadow-xl p-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Welcome to BountyBoard
-              </h1>
-              <p className="text-gray-600 text-lg mb-8">
-                Connect your wallet to start exploring and creating bounties.
-              </p>
-              <Button
-                onClick={handleConnect}
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-3 rounded-lg font-semibold hover:from-green-600 hover:to-blue-700 transition-all duration-200"
+      <div className="relative flex flex-col min-h-screen">
+        <div className="flex-1 flex items-center justify-center py-20 px-4">
+          <div className="w-full max-w-7xl mx-auto">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col items-center justify-center"
+            >
+              <Card 
+                className="w-full max-w-xl mb-16"
+                classNames={{
+                  base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg border-1 border-white/20",
+                }}
               >
-                {isLoading ? 'Connecting...' : 'Connect Wallet'}
-              </Button>
-            </div>
-          </div>
+                <CardBody className="text-center py-12 px-8">
+                  <motion.h1 
+                    className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    Welcome to BountyBoard
+                  </motion.h1>
+                  <motion.p 
+                    className="text-xl text-foreground/80 mb-10"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    Connect your wallet to start exploring and creating bounties.
+                  </motion.p>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <Button
+                      size="lg"
+                      color="primary"
+                      variant="shadow"
+                      onPress={handleConnect}
+                      isDisabled={isLoading}
+                      className="w-full max-w-md h-14 font-semibold text-lg"
+                    >
+                      {isLoading ? (
+                        <Spinner color="current" size="sm" />
+                      ) : (
+                        'Connect Wallet'
+                      )}
+                    </Button>
+                  </motion.div>
+                </CardBody>
+              </Card>
 
-          {bounties.length > 0 && (
-            <div className="w-full">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Latest Bounties</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {bounties.map((bounty: any) => (
-                  <div key={bounty.id} className="bg-white rounded-lg shadow-md p-6">
-                    <h3 className="text-xl font-semibold mb-2">{bounty.title}</h3>
-                    <p className="text-gray-600">{bounty.description}</p>
-                    <div className="mt-4">
-                      <span className="text-green-600 font-semibold">{bounty.reward} ETH</span>
-                    </div>
+              {bounties.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="w-full"
+                >
+                  <h2 className="text-4xl font-bold mb-10 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500">
+                    Latest Bounties
+                  </h2>
+                  <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {bounties.map((bounty: any) => (
+                      <motion.div 
+                        key={bounty.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                      >
+                        <Card 
+                          className="w-full h-full"
+                          classNames={{
+                            base: [
+                              "bg-background/40",
+                              "dark:bg-default-100/20",
+                              "backdrop-blur-lg",
+                              "border-1",
+                              "border-white/20",
+                              "hover:border-white/40",
+                              "transition-all",
+                              "duration-300",
+                              "hover:-translate-y-1"
+                            ].join(" ")
+                          }}
+                        >
+                          <CardBody className="p-6">
+                            <h3 className="text-xl font-semibold mb-3">
+                              {bounty.title}
+                            </h3>
+                            <p className="text-foreground/70 mb-4 line-clamp-3">
+                              {bounty.description}
+                            </p>
+                          </CardBody>
+                          <CardFooter className="justify-between px-6 py-4 border-t-1 border-white/10">
+                            <Chip
+                              color="success"
+                              variant="shadow"
+                              className="font-medium px-4"
+                            >
+                              {bounty.reward} ETH
+                            </Chip>
+                            <Button
+                              size="sm"
+                              color="primary"
+                              variant="flat"
+                              className="bg-white/10 hover:bg-white/20"
+                              onPress={() => {}}
+                            >
+                              View Details
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      </motion.div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </motion.div>
+              )}
+            </motion.div>
+          </div>
         </div>
       </div>
-    </main>
+    </>
   )
 }

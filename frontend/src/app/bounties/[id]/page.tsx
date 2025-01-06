@@ -83,8 +83,8 @@ export default function BountyDetail() {
     const fetchData = async () => {
       try {
         const [bountyResponse, submissionsResponse] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/bounties/${id}`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/bounties/${id}/submissions`)
+          fetch(`http://localhost:8080/api/v1/bounties/${id}`),
+          fetch(`http://localhost:8080/api/v1/bounties/${id}/submissions`)
         ])
         
         const [bountyData, submissionsData] = await Promise.all([
@@ -111,7 +111,7 @@ export default function BountyDetail() {
     if (!isConnected || !submission) return
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/bounties/${id}/submit`, {
+      const response = await fetch(`http://localhost:8080/api/v1/bounties/${id}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

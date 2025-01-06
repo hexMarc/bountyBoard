@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@nextui-org/react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 
@@ -9,7 +9,7 @@ export const LensAuthButton = () => {
 
   if (isConnecting) {
     return (
-      <Button disabled variant="outline" className="animate-pulse">
+      <Button disabled variant="bordered" className="animate-pulse">
         Loading...
       </Button>
     );
@@ -18,10 +18,10 @@ export const LensAuthButton = () => {
   if (isConnected) {
     return (
       <div className="flex items-center space-x-2">
-        <span className="text-sm text-gray-700">
+        <span className="text-sm text-foreground/70">
           {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
-        <Button onClick={() => disconnect()} variant="outline" size="sm">
+        <Button onPress={() => disconnect()} color="primary" variant="bordered" size="sm">
           Disconnect
         </Button>
       </div>
@@ -30,7 +30,7 @@ export const LensAuthButton = () => {
 
   return (
     <div>
-      <Button onClick={() => connect({ connector: injected() })} variant="default" size="sm">
+      <Button onPress={() => connect({ connector: injected() })} color="primary" variant="solid" size="sm">
         Connect Wallet
       </Button>
     </div>
