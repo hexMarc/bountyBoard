@@ -1,0 +1,52 @@
+# Dependency directories
+node_modules/
+cache/
+artifacts/
+artifacts-zk/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Hardhat files
+coverage
+coverage.json
+typechain
+typechain-types
+.openzeppelin
+
+# ZkSync specific
+cache-zk/
+zksolc*.json
+
+# Test files
+coverage.json
+test-results.xml
+
+# Debug logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE specific files
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build output
+dist/
+build/
+deployments/
