@@ -6,6 +6,7 @@ import (
 	"github.com/bountyBoard/internal/database"
 	"github.com/bountyBoard/internal/models"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func RegisterUserRoutes(router *gin.RouterGroup) {
@@ -23,6 +24,8 @@ func createUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	user.ID = uuid.New().String()
 
 	// Start transaction
 	tx := database.DB.Begin()
@@ -58,7 +61,7 @@ func createUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"user": user,
+		"user":    user,
 		"message": "User created successfully",
 	})
 }
@@ -99,7 +102,7 @@ func updateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user": user,
+		"user":    user,
 		"message": "User updated successfully",
 	})
 }
