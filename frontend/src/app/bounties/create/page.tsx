@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import { useAccount } from 'wagmi'
 import { parseEther } from 'viem'
 import { Card, CardBody, CardHeader, Button, Input, Textarea } from '@nextui-org/react'
 import { motion } from 'framer-motion'
+import { useWalletAuth } from '@/hooks/useWalletAuth'
 
 interface FormData {
   title: string
@@ -18,6 +19,7 @@ interface FormData {
 export default function CreateBounty() {
   const router = useRouter()
   const { isConnected, address } = useAccount()
+  const { getAuthHeader, signIn } = useWalletAuth()
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -25,6 +27,13 @@ export default function CreateBounty() {
     deadline: ''
   })
   const [errors, setErrors] = useState<Partial<FormData>>({})
+
+  // Redirect to home if not connected
+  useEffect(() => {
+    if (!isConnected) {
+      router.push('/')
+    }
+  }, [isConnected, router])
 
   const validateForm = () => {
     const newErrors: Partial<FormData> = {}
@@ -58,6 +67,16 @@ export default function CreateBounty() {
     e.preventDefault()
 
     if (!isConnected) {
+      try {
+        await signIn()
+      } catch (error) {
+        console.error('Failed to connect wallet:', error)
+        return
+      }
+    }
+
+    const authHeader = getAuthHeader()
+    if (!authHeader) {
       alert('Please connect your wallet first')
       return
     }
@@ -72,13 +91,13 @@ export default function CreateBounty() {
         description: formData.description,
         reward: formData.reward,
         deadline: new Date(formData.deadline).toISOString(),
-        creatorId: address
       }
 
       const response = await fetch(`http://localhost:8080/api/v1/bounties`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': authHeader,
         },
         body: JSON.stringify(payload)
       })
@@ -123,8 +142,32 @@ export default function CreateBounty() {
   minDate.setMinutes(minDate.getMinutes() - minDate.getTimezoneOffset())
   const minDateString = minDate.toISOString().slice(0, 16)
 
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
+        <Header />
+        <main className="max-w-7xl mx-auto pt-24 pb-6 sm:px-6 lg:px-8">
+          <Card className="bg-background/60 dark:bg-default-100/50 backdrop-blur-lg">
+            <CardBody className="text-center py-10">
+              <h1 className="text-2xl font-bold mb-4">Connect Your Wallet</h1>
+              <p className="text-foreground/70 mb-6">Please connect your wallet to create a bounty</p>
+              <Button 
+                color="primary"
+                variant="shadow"
+                onPress={signIn}
+                className="font-semibold"
+              >
+                Connect Wallet
+              </Button>
+            </CardBody>
+          </Card>
+        </main>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
       <Header />
       
       <main className="max-w-7xl mx-auto pt-24 pb-6 sm:px-6 lg:px-8">

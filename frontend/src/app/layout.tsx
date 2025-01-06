@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={`${spaceGrotesk.className} min-h-screen bg-background text-foreground antialiased`}>
+      <body className={`${spaceGrotesk.className} min-h-screen bg-background text-foreground antialiased`} suppressHydrationWarning>
         <Providers>
           <main className="relative flex flex-col min-h-screen">
             <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />

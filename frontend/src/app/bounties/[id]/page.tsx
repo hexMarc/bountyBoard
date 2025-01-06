@@ -10,6 +10,7 @@ import { BOUNTY_BOARD_ABI } from '@/lib/contracts/abis'
 import { useProfile } from '@lens-protocol/react-web'
 import { Card, CardBody, CardHeader, Button, Chip, Textarea, Spinner, Divider } from '@nextui-org/react'
 import { motion } from 'framer-motion'
+import { useWalletAuth } from '@/hooks/useWalletAuth'
 
 interface Bounty {
   id: number
@@ -36,6 +37,7 @@ export default function BountyDetail() {
   const { id } = useParams()
   const router = useRouter()
   const { address, isConnected } = useAccount()
+  const { getAuthHeader } = useWalletAuth()
   const [bounty, setBounty] = useState<Bounty | null>(null)
   const [submission, setSubmission] = useState('')
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -112,11 +114,18 @@ export default function BountyDetail() {
     e.preventDefault()
     if (!isConnected || !submission) return
 
+    const authHeader = getAuthHeader()
+    if (!authHeader) {
+      alert('Please connect your wallet first')
+      return
+    }
+
     try {
       const response = await fetch(`http://localhost:8080/api/v1/bounties/${id}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': authHeader,
         },
         body: JSON.stringify({ content: submission }),
       })

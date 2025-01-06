@@ -7,6 +7,9 @@ import { useProfile } from '@lens-protocol/react'
 import { useSession, SessionType } from '@lens-protocol/react-web'
 import { useReadContract } from 'wagmi'
 import { REPUTATION_ABI } from '@/lib/contracts/abis'
+import { Card, CardBody, CardHeader, Button, Chip, Divider } from '@nextui-org/react'
+import { motion } from 'framer-motion'
+import { useWalletAuth } from '@/hooks/useWalletAuth'
 
 interface Bounty {
   id: number
@@ -17,8 +20,10 @@ interface Bounty {
 
 export default function Profile() {
   const { data: session } = useSession()
+  const { getAuthHeader, signIn, isConnected, address } = useWalletAuth()
   const [createdBounties, setCreatedBounties] = useState<Bounty[]>([])
   const [claimedBounties, setClaimedBounties] = useState<Bounty[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   // Get reputation score from smart contract
   const { data: reputationScore } = useReadContract({
@@ -26,8 +31,7 @@ export default function Profile() {
     abi: REPUTATION_ABI,
     functionName: 'getReputation',
     args: session?.type === SessionType.WithProfile ? [`0x${session.profile.id}`] : 
-          session?.type === SessionType.JustWallet ? [`0x${session.address}`] : 
-          undefined
+          address ? [`0x${address.toLowerCase()}`] : undefined
   })
 
   // Get completed tasks count
@@ -36,162 +40,262 @@ export default function Profile() {
     abi: REPUTATION_ABI,
     functionName: 'getCompletedTasks',
     args: session?.type === SessionType.WithProfile ? [`0x${session.profile.id}`] : 
-          session?.type === SessionType.JustWallet ? [`0x${session.address}`] : 
-          undefined
+          address ? [`0x${address.toLowerCase()}`] : undefined
   })
 
   useEffect(() => {
     const fetchBounties = async () => {
-      const userId = session?.type === SessionType.WithProfile ? session.profile.id :
-                    session?.type === SessionType.JustWallet ? session.address :
-                    undefined;
-                    
-      if (!userId) return;
+      if (!isConnected) {
+        console.log('Wallet not connected, attempting to connect...');
+        try {
+          await signIn();
+        } catch (error) {
+          console.error('Failed to connect wallet:', error);
+          return;
+        }
+      }
 
+      // Use either Lens profile ID or wallet address
+      const userId = session?.type === SessionType.WithProfile ? session.profile.id :
+                    session?.type === SessionType.JustWallet ? session.address.toLowerCase() :
+                    address ? address.toLowerCase() : undefined;
+
+      if (!userId) {
+        console.log('No user ID available, skipping fetch');
+        return;
+      }
+
+      setIsLoading(true);
       try {
+        // Ensure wallet address starts with 0x and is lowercase
+        const formattedUserId = userId.toLowerCase().startsWith('0x') ? userId.toLowerCase() : `0x${userId.toLowerCase()}`
+        const authHeader = getAuthHeader()
+        
+        if (!authHeader) {
+          console.error('No auth header available')
+          return
+        }
+
+        const headers = {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        }
+
+        console.log('Fetching bounties for user:', formattedUserId)
+        console.log('Using headers:', headers)
+
         // Fetch created bounties
         const createdResponse = await fetch(
-          `http://localhost:8080/api/v1/bounties?creator=${userId}`
+          `http://localhost:8080/api/v1/bounties?creator=${formattedUserId}`,
+          { headers }
         )
+        if (!createdResponse.ok) {
+          console.error('Created bounties response not OK:', await createdResponse.text())
+          throw new Error(`Failed to fetch created bounties: ${createdResponse.statusText}`)
+        }
         const createdData = await createdResponse.json()
+        console.log('Created bounties response:', createdData)
         setCreatedBounties(createdData)
 
         // Fetch claimed bounties
         const claimedResponse = await fetch(
-          `http://localhost:8080/api/v1/bounties?hunter=${userId}`
+          `http://localhost:8080/api/v1/bounties?hunter=${formattedUserId}`,
+          { headers }
         )
+        if (!claimedResponse.ok) {
+          console.error('Claimed bounties response not OK:', await claimedResponse.text())
+          throw new Error(`Failed to fetch claimed bounties: ${claimedResponse.statusText}`)
+        }
         const claimedData = await claimedResponse.json()
+        console.log('Claimed bounties response:', claimedData)
         setClaimedBounties(claimedData)
       } catch (error) {
         console.error('Error fetching bounties:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    fetchBounties()
-  }, [session])
+    if (isConnected) {
+      fetchBounties()
+    }
+  }, [session, getAuthHeader, isConnected, signIn, address])
 
   if (!session) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
         <Header />
         <main className="max-w-7xl mx-auto pt-24 pb-6 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <p>Please connect your Lens profile to view your dashboard</p>
-          </div>
+          <Card className="bg-background/60 dark:bg-default-100/50 backdrop-blur-lg">
+            <CardBody className="text-center py-10">
+              <p className="text-lg">Please connect your wallet to view your dashboard</p>
+            </CardBody>
+          </Card>
         </main>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
       <Header />
       
       <main className="max-w-7xl mx-auto pt-24 pb-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="px-4 py-6 sm:px-0 space-y-8"
+        >
           {/* Profile Overview */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
-            <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                Profile Information
-              </h3>
-            </div>
-            <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
-              <dl className="sm:divide-y sm:divide-gray-200">
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">Handle</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {session?.type === SessionType.WithProfile ? session.profile.handle?.fullHandle : session?.type === SessionType.JustWallet ? session.address : 'Anonymous'}
-                  </dd>
+          <Card 
+            className="w-full"
+            classNames={{
+              base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg border-1 border-white/20",
+            }}
+          >
+            <CardHeader className="px-6 pt-6">
+              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500">
+                Profile Overview
+              </h1>
+            </CardHeader>
+            <CardBody className="px-6">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-foreground/70">Handle</span>
+                  <span className="font-medium">
+                    {session?.type === SessionType.WithProfile ? session.profile.handle?.fullHandle : 
+                     session?.type === SessionType.JustWallet ? session.address : 'Anonymous'}
+                  </span>
                 </div>
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">Reputation Score</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {reputationScore?.toString() || '0'}
-                  </dd>
+                <Divider />
+                <div className="flex justify-between items-center">
+                  <span className="text-foreground/70">Reputation Score</span>
+                  <Chip
+                    variant="shadow"
+                    color="success"
+                    classNames={{
+                      base: "bg-gradient-to-br from-indigo-500 to-pink-500 border-small border-white/50",
+                      content: "drop-shadow shadow-black text-white",
+                    }}
+                  >
+                    {reputationScore?.toString() || '0'} Points
+                  </Chip>
                 </div>
-                <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                  <dt className="text-sm font-medium text-gray-500">Completed Tasks</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {completedTasks?.toString() || '0'}
-                  </dd>
+                <Divider />
+                <div className="flex justify-between items-center">
+                  <span className="text-foreground/70">Completed Tasks</span>
+                  <Chip
+                    variant="shadow"
+                    color="primary"
+                    classNames={{
+                      base: "bg-gradient-to-br from-purple-500 to-cyan-500 border-small border-white/50",
+                      content: "drop-shadow shadow-black text-white",
+                    }}
+                  >
+                    {completedTasks?.toString() || '0'} Tasks
+                  </Chip>
                 </div>
-              </dl>
-            </div>
-          </div>
+              </div>
+            </CardBody>
+          </Card>
 
           {/* Created Bounties */}
-          <div className="mb-8">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Created Bounties
-            </h3>
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <ul className="divide-y divide-gray-200">
+          <Card 
+            className="w-full"
+            classNames={{
+              base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg border-1 border-white/20",
+            }}
+          >
+            <CardHeader className="px-6 pt-6">
+              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500">
+                Created Bounties
+              </h2>
+            </CardHeader>
+            <CardBody className="px-6">
+              <div className="space-y-4">
                 {createdBounties.map((bounty) => (
-                  <li key={bounty.id}>
-                    <a href={`/bounties/${bounty.id}`} className="block hover:bg-gray-50">
-                      <div className="px-4 py-4 sm:px-6">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-primary-600 truncate">
-                            {bounty.title}
-                          </p>
-                          <div className="ml-2 flex-shrink-0 flex">
-                            <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              {bounty.status}
-                            </p>
-                          </div>
+                  <Card
+                    key={bounty.id}
+                    isPressable
+                    onPress={() => window.location.href = `/bounties/${bounty.id}`}
+                    classNames={{
+                      base: "bg-white/10 hover:bg-white/20 transition-all",
+                    }}
+                  >
+                    <CardBody className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-lg">{bounty.title}</h3>
+                          <p className="text-foreground/70 mt-1">{bounty.reward} GRASS</p>
                         </div>
-                        <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
-                            <p className="flex items-center text-sm text-gray-500">
-                              {bounty.reward} GRASS
-                            </p>
-                          </div>
-                        </div>
+                        <Chip
+                          variant="flat"
+                          color={bounty.status === 'open' ? "success" : 
+                                bounty.status === 'claimed' ? "warning" : 
+                                "primary"}
+                        >
+                          {bounty.status}
+                        </Chip>
                       </div>
-                    </a>
-                  </li>
+                    </CardBody>
+                  </Card>
                 ))}
-              </ul>
-            </div>
-          </div>
+                {createdBounties.length === 0 && (
+                  <p className="text-center text-foreground/70 py-4">No bounties created yet</p>
+                )}
+              </div>
+            </CardBody>
+          </Card>
 
           {/* Claimed Bounties */}
-          <div>
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Claimed Bounties
-            </h3>
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <ul className="divide-y divide-gray-200">
+          <Card 
+            className="w-full"
+            classNames={{
+              base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg border-1 border-white/20",
+            }}
+          >
+            <CardHeader className="px-6 pt-6">
+              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-violet-500">
+                Claimed Bounties
+              </h2>
+            </CardHeader>
+            <CardBody className="px-6">
+              <div className="space-y-4">
                 {claimedBounties.map((bounty) => (
-                  <li key={bounty.id}>
-                    <a href={`/bounties/${bounty.id}`} className="block hover:bg-gray-50">
-                      <div className="px-4 py-4 sm:px-6">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-primary-600 truncate">
-                            {bounty.title}
-                          </p>
-                          <div className="ml-2 flex-shrink-0 flex">
-                            <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              {bounty.status}
-                            </p>
-                          </div>
+                  <Card
+                    key={bounty.id}
+                    isPressable
+                    onPress={() => window.location.href = `/bounties/${bounty.id}`}
+                    classNames={{
+                      base: "bg-white/10 hover:bg-white/20 transition-all",
+                    }}
+                  >
+                    <CardBody className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-lg">{bounty.title}</h3>
+                          <p className="text-foreground/70 mt-1">{bounty.reward} GRASS</p>
                         </div>
-                        <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
-                            <p className="flex items-center text-sm text-gray-500">
-                              {bounty.reward} GRASS
-                            </p>
-                          </div>
-                        </div>
+                        <Chip
+                          variant="flat"
+                          color={bounty.status === 'open' ? "success" : 
+                                bounty.status === 'claimed' ? "warning" : 
+                                "primary"}
+                        >
+                          {bounty.status}
+                        </Chip>
                       </div>
-                    </a>
-                  </li>
+                    </CardBody>
+                  </Card>
                 ))}
-              </ul>
-            </div>
-          </div>
-        </div>
+                {claimedBounties.length === 0 && (
+                  <p className="text-center text-foreground/70 py-4">No bounties claimed yet</p>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        </motion.div>
       </main>
     </div>
   )

@@ -1,71 +1,64 @@
-"use client";
+'use client'
 
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { ConnectKitProvider, getDefaultConfig } from "connectkit";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { polygon } from "wagmi/chains";
-import { LensConfig, LensProvider, production } from "@lens-protocol/react-web";
-import { bindings } from "@lens-protocol/wagmi";
-import { type Chain } from "viem";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { http } from 'wagmi'
+import { createConfig, WagmiProvider } from 'wagmi'
+import { ConnectKitProvider, getDefaultConfig } from 'connectkit'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { development, LensConfig, LensProvider } from '@lens-protocol/react-web'
+import { bindings } from '@lens-protocol/wagmi'
+import { ThemeProvider as NextThemesProvider } from 'next-themes'
 import { NextUIProvider } from '@nextui-org/react'
+import { Network } from '@/constants/contracts'
 
-
-export const lensTestnet: Chain = {
-  id: 37111,
-  name: "Lens Network Sepolia Testnet",
-  nativeCurrency: {
-    decimals: 18,
-    name: "Grass",
-    symbol: "GRASS",
-  },
+// Define the Lens Network chain
+const lensChain = {
+  id: Network.LENS.id,
+  name: Network.LENS.name,
+  network: 'lens-testnet',
+  nativeCurrency: Network.LENS.nativeCurrency,
   rpcUrls: {
-    default: { http: ["https://rpc.testnet.lens.dev"] },
+    default: {
+      http: [Network.LENS.rpcUrl],
+    },
+    public: {
+      http: [Network.LENS.rpcUrl],
+    },
   },
   blockExplorers: {
-    default: { name: "BlockExplorer", url: "https://block-explorer.testnet.lens.dev" }
+    default: {
+      name: 'Lens Explorer',
+      url: Network.LENS.blockExplorer,
+    },
   },
-  testnet: true,
 };
-
 const config = createConfig(
   getDefaultConfig({
-    // Your dApps chains
-    chains: [lensTestnet],
+    appName: 'Bounty Board',
+    appDescription: 'A decentralized bounty marketplace powered by Lens Protocol',
+    appUrl: 'https://bountiesboard.xyz',
+    appIcon: '/logo.png',
+
+    chains: [lensChain],
     transports: {
-      // RPC URL for each chain
-      [lensTestnet.id]: http(lensTestnet.rpcUrls.default.http[0]),
+      [lensChain.id]: http(Network.LENS.rpcUrl),
     },
 
-    // Required API Keys
-    walletConnectProjectId:
-      process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
+    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '',
+  }),
+)
 
-    // Required App Info
-    appName: 'Lens Bounty Board',
-
-    // Optional App Info
-    appDescription:
-      "A decentralized bounty marketplace powered by Lens Protocol and Grass Tokens",
-    appUrl: "https://lensbountyboard.xyz/",
-    appIcon: "https://family.co/logo.png", // your app's icon, no bigger than 1024x1024px (max. 1MB)
-  })
-);
-
-const polygonConfig = createConfig({
-  chains: [polygon],
-  transports: {
-    [polygon.id]: http(polygon.rpcUrls.default.http[0]),
-  },
-});
-
-const queryClient = new QueryClient();
+const queryClient = new QueryClient()
 
 const lensConfig: LensConfig = {
-  environment: production,
-  bindings: bindings(polygonConfig),
-};
-export function Providers({ children }: { children: React.ReactNode }) {
+  environment: development,
+  bindings: bindings(config),
+}
+
+type ProvidersProps = {
+  children: React.ReactNode
+}
+
+export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={config}>
@@ -80,5 +73,5 @@ export function Providers({ children }: { children: React.ReactNode }) {
         </ConnectKitProvider>
       </WagmiProvider>
     </QueryClientProvider>
-  );
+  )
 }
