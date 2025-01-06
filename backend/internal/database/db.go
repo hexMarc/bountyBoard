@@ -25,8 +25,11 @@ func InitDB() {
 
 	// Auto migrate the schema
 	err = DB.AutoMigrate(
+		&models.User{},
 		&models.Bounty{},
 		&models.BountySubmission{},
+		&models.Reputation{},
+		&models.Badge{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database: ", err)
