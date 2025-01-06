@@ -2,10 +2,9 @@
 
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenuToggle, NavbarMenu, NavbarMenuItem, Button, Link } from '@nextui-org/react'
+import { Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenuToggle, NavbarMenu, NavbarMenuItem, Link } from '@nextui-org/react'
 import { useAccount } from 'wagmi'
 import { ConnectKitButton } from 'connectkit'
-import { LensAuthButton } from '@/components/lens/LensAuthButton'
 
 const navigation = [
   { name: 'Dashboard', href: '/' },
@@ -15,7 +14,7 @@ const navigation = [
 ]
 
 export default function Header() {
-  const { address, isConnected } = useAccount()
+  const { isConnected } = useAccount()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
 
@@ -82,12 +81,8 @@ export default function Header() {
         </NavbarContent>
 
         <NavbarContent justify="end" className="basis-1/5 sm:basis-auto gap-4">
-          <NavbarItem className="hidden sm:flex gap-3">
-            <div className="flex items-center gap-3">
-              <LensAuthButton />
-              <div className="h-6 w-[1px] bg-foreground/10" />
-              <ConnectKitButton />
-            </div>
+          <NavbarItem className="hidden sm:flex">
+            <ConnectKitButton />
           </NavbarItem>
         </NavbarContent>
 
@@ -102,7 +97,6 @@ export default function Header() {
                     ? "bg-primary-500/10" 
                     : "opacity-70 hover:opacity-100"
                 }`}
-                size="lg"
               >
                 {item.name}
               </Link>
@@ -110,7 +104,6 @@ export default function Header() {
           ))}
           <NavbarMenuItem className="mt-8 pb-6 border-t border-foreground/10 pt-6">
             <div className="flex flex-col gap-4 w-full">
-              <LensAuthButton />
               <ConnectKitButton />
             </div>
           </NavbarMenuItem>

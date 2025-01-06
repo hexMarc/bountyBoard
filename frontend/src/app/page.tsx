@@ -1,38 +1,52 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
-import { useLensAuth } from '@/hooks/useLensAuth'
+import { useAccount } from 'wagmi'
 import { Card, CardBody, CardFooter, Button, Spinner, Chip } from '@nextui-org/react'
 import { motion } from 'framer-motion'
 
 export default function Home() {
+  const router = useRouter()
+  const { isConnected } = useAccount()
   const [bounties, setBounties] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchBounties = async () => {
       try {
+        // Fetch all bounties without status filter
         const response = await fetch(`http://localhost:8080/api/v1/bounties`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch bounties')
+        }
         const data = await response.json()
-        setBounties(data)
+        // Sort by newest first and take first 3
+        const sortedBounties = data
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 3)
+        setBounties(sortedBounties)
       } catch (error) {
         console.error('Error fetching bounties:', error)
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchBounties()
   }, [])
 
-  const handleConnect = async () => {
-    setIsLoading(true)
-    try {
-      console.log('Connect button clicked')
-    } catch (error) {
-      console.error('Error signing in:', error)
-    } finally {
-      setIsLoading(false)
-    }
+  const handleCreateBounty = () => {
+    router.push('/bounties/create')
+  }
+
+  const handleViewBounties = () => {
+    router.push('/bounties')
+  }
+
+  const handleViewBounty = (id: number) => {
+    router.push(`/bounties/${id}`)
   }
 
   return (
@@ -60,40 +74,57 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    Welcome to BountyBoard
+                    BountyBoard
                   </motion.h1>
                   <motion.p 
-                    className="text-xl text-foreground/80 mb-10"
+                    className="text-xl text-foreground/80 mb-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    Connect your wallet to start exploring and creating bounties.
+                    The decentralized platform for creating and claiming bounties.
+                    Earn rewards by completing tasks or create bounties to get help from the community.
                   </motion.p>
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <Button
-                      size="lg"
-                      color="primary"
-                      variant="shadow"
-                      onPress={handleConnect}
-                      isDisabled={isLoading}
-                      className="w-full max-w-md h-14 font-semibold text-lg"
+                  
+                  {isConnected ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.4 }}
+                      className="flex flex-col sm:flex-row gap-4 justify-center"
                     >
-                      {isLoading ? (
-                        <Spinner color="current" size="sm" />
-                      ) : (
-                        'Connect Wallet'
-                      )}
-                    </Button>
-                  </motion.div>
+                      <Button
+                        size="lg"
+                        color="primary"
+                        variant="shadow"
+                        onPress={handleCreateBounty}
+                        className="font-semibold"
+                      >
+                        Create a Bounty
+                      </Button>
+                      <Button
+                        size="lg"
+                        variant="flat"
+                        className="bg-white/10 hover:bg-white/20 font-semibold"
+                        onPress={handleViewBounties}
+                      >
+                        View Open Bounties
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <motion.p 
+                      className="text-lg text-foreground/70"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      Connect your wallet to start creating or claiming bounties
+                    </motion.p>
+                  )}
                 </CardBody>
               </Card>
 
-              {bounties.length > 0 && (
+              {!loading && bounties.length > 0 && (
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -112,6 +143,8 @@ export default function Home() {
                         transition={{ delay: 0.6 }}
                       >
                         <Card 
+                          isPressable
+                          onPress={() => handleViewBounty(bounty.id)}
                           className="w-full h-full"
                           classNames={{
                             base: [
@@ -141,22 +174,33 @@ export default function Home() {
                               variant="shadow"
                               className="font-medium px-4"
                             >
-                              {bounty.reward} ETH
+                              {bounty.reward} GRASS
                             </Chip>
-                            <Button
-                              size="sm"
+                            <Chip
                               color="primary"
                               variant="flat"
-                              className="bg-white/10 hover:bg-white/20"
-                              onPress={() => {}}
+                              className="bg-white/10"
                             >
-                              View Details
-                            </Button>
+                              {bounty.status}
+                            </Chip>
                           </CardFooter>
                         </Card>
                       </motion.div>
                     ))}
                   </div>
+                  
+                  {bounties.length > 0 && (
+                    <div className="flex justify-center mt-10">
+                      <Button
+                        size="lg"
+                        variant="flat"
+                        className="bg-white/10 hover:bg-white/20 font-semibold"
+                        onPress={handleViewBounties}
+                      >
+                        View All Bounties
+                      </Button>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </motion.div>
