@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bountyBoard/internal/middleware"
 	"log"
 	"os"
 
@@ -34,15 +35,6 @@ func main() {
 		c.Next()
 	})
 
-	// Apply Lens authentication middleware to protected routes
-	protected := r.Group("/api")
-	// protected.Use(middleware.LensAuth())
-
-	// Register API routes
-	v1.RegisterBountyRoutes(r)
-	v1.RegisterReputationRoutes(r)
-	v1.RegisterUserRoutes(protected)
-
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -50,14 +42,20 @@ func main() {
 		})
 	})
 
-	// Get port from environment variable or default to 8080
+	// Register API routes
+	v1.RegisterBountyRoutes(r)
+	v1.RegisterReputationRoutes(r)
+
+	// Apply Lens authentication middleware to protected routes
+	protected := r.Group("/api/v1")
+	// protected.Use(middleware.LensAuth())
+	protected.Use(middleware.WalletAuth())
+	v1.RegisterUserRoutes(protected)
+
+	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-
-	// Start server
-	if err := r.Run(":" + port); err != nil {
-		log.Fatal("Failed to start server: ", err)
-	}
+	r.Run(":" + port)
 }

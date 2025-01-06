@@ -1,19 +1,28 @@
 -- Seed data for BountyBoard application
--- Generated on 2025-01-06
+-- Generated on 2025-01-07
+
+-- Clear existing data
+TRUNCATE TABLE bounty_submissions CASCADE;
+TRUNCATE TABLE bounties CASCADE;
+TRUNCATE TABLE badges CASCADE;
+TRUNCATE TABLE reputations CASCADE;
+TRUNCATE TABLE users CASCADE;
 
 -- Insert Users
 INSERT INTO users (id, username, address, bio, avatar, created_at, updated_at)
 VALUES 
   ('u1', 'alice_web3', '0x1234567890123456789012345678901234567890', 'Blockchain developer and smart contract auditor', 'https://example.com/avatar1.jpg', '2025-01-06 17:26:43', '2025-01-06 17:26:43'),
   ('u2', 'bob_crypto', '0x2345678901234567890123456789012345678901', 'DeFi enthusiast and full-stack developer', 'https://example.com/avatar2.jpg', '2025-01-06 17:26:43', '2025-01-06 17:26:43'),
-  ('u3', 'carol_dev', '0x3456789012345678901234567890123456789012', 'Smart contract developer and security researcher', 'https://example.com/avatar3.jpg', '2025-01-06 17:26:43', '2025-01-06 17:26:43');
+  ('u3', 'carol_dev', '0x3456789012345678901234567890123456789012', 'Smart contract developer and security researcher', 'https://example.com/avatar3.jpg', '2025-01-06 17:26:43', '2025-01-06 17:26:43'),
+  ('0x15b5bdf7a5e0305b9a4be413383c9b1500c8fcf2', NULL, '0x15b5bdf7a5e0305b9a4be413383c9b1500c8fcf2', '', '', '2025-01-07 02:46:32', '2025-01-07 02:46:32');
 
 -- Insert Reputations
 INSERT INTO reputations (user_id, score, level, created_at, updated_at)
 VALUES 
   ('u1', 350, 3, '2025-01-06 17:26:43', '2025-01-06 17:26:43'),
   ('u2', 180, 1, '2025-01-06 17:26:43', '2025-01-06 17:26:43'),
-  ('u3', 520, 5, '2025-01-06 17:26:43', '2025-01-06 17:26:43');
+  ('u3', 520, 5, '2025-01-06 17:26:43', '2025-01-06 17:26:43'),
+  ('0x15b5bdf7a5e0305b9a4be413383c9b1500c8fcf2', 0, 1, '2025-01-07 02:46:32', '2025-01-07 02:46:32');
 
 -- Insert Badges
 INSERT INTO badges (user_id, name, description, token_uri, tx_hash, created_at)
@@ -64,6 +73,18 @@ VALUES
     '2025-01-06 17:26:43',
     '2025-01-06 17:26:43',
     '0xtx3...345'
+  ),
+  (
+    'Test Bounty 1', 
+    'Test bounty created by current user',
+    '1.0',
+    '0x15b5bdf7a5e0305b9a4be413383c9b1500c8fcf2',
+    NULL,
+    'open',
+    '2025-02-07 02:46:32',
+    '2025-01-07 02:46:32',
+    '2025-01-07 02:46:32',
+    '0xtx4...678'
   );
 
 -- Insert Bounty Submissions

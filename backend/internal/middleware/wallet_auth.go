@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -12,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func LensAuth() gin.HandlerFunc {
+func WalletAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -29,35 +27,16 @@ func LensAuth() gin.HandlerFunc {
 			return
 		}
 
-		profileData := parts[1]
-
-		// Decode the base64 profile data
-		profileBytes, err := base64.StdEncoding.DecodeString(profileData)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid profile data format"})
-			c.Abort()
-			return
-		}
-
-		// Parse the profile data
-		var profile map[string]interface{}
-		if err := json.Unmarshal(profileBytes, &profile); err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid profile data"})
-			c.Abort()
-			return
-		}
-
-		// Extract profile ID
-		profileID, ok := profile["id"].(string)
-		if !ok || profileID == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid profile ID"})
+		walletAddress := strings.ToLower(parts[1])
+		if !strings.HasPrefix(walletAddress, "0x") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid wallet address format"})
 			c.Abort()
 			return
 		}
 
 		// Try to find existing user
 		var user models.User
-		result := database.DB.First(&user, "id = ?", profileID)
+		result := database.DB.First(&user, "address = ?", walletAddress)
 		if result.Error != nil {
 			if result.Error == gorm.ErrRecordNotFound {
 				// User doesn't exist, create new user with reputation
@@ -70,13 +49,14 @@ func LensAuth() gin.HandlerFunc {
 
 				// Create user
 				user = models.User{
-					ID:      profileID,
-					Address: profile["ownedBy"].(string),
+					ID:      walletAddress, // Using wallet address as ID
+					Address: walletAddress,
+					// Username is optional now
 				}
 
 				if err := tx.Create(&user).Error; err != nil {
 					tx.Rollback()
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user: " + err.Error()})
 					c.Abort()
 					return
 				}
@@ -108,7 +88,7 @@ func LensAuth() gin.HandlerFunc {
 			}
 		}
 
-		c.Set("user_id", profileID)
+		c.Set("user_id", user.ID)
 		c.Next()
 	}
 }
