@@ -137,10 +137,10 @@ export default function CreateBounty() {
       console.log("Approving tokens...");
       const approvalHash = await writeContractAsync({
         address: GRASS_TOKEN_ADDRESS,
-        abi: erc20Abi,
+        abi: GRASS_TOKEN_ABI,
         functionName: "approve",
         args: [BOUNTY_BOARD_ADDRESS, reward],
-        gas: BigInt(100000), // Add gas limit for approval
+        // gas: BigInt(100000), // Add gas limit for approval
       });
 
       console.log("Approval transaction hash:", approvalHash);
