@@ -48,6 +48,7 @@ func RegisterBountyRoutes(router *gin.Engine) {
 		protected.POST("/bounties/:id/dispute", raiseDispute)
 		protected.POST("/bounties/:id/complete", completeBounty)
 		protected.POST("/bounties/:id/comments", addBountyComment)
+		protected.POST("/bounties/:id/resolve", resolveDispute)
 	}
 }
 
@@ -132,17 +133,22 @@ func getBounty(c *gin.Context) {
 		return
 	}
 
-	// Convert addresses to lowercase for consistency
-	bounty.CreatorID = strings.ToLower(bounty.CreatorID)
+	// Always ensure addresses are lowercase and have 0x prefix
+	bounty.CreatorID = ensureAddressFormat(bounty.CreatorID)
 	if bounty.HunterID != nil {
-		hunterID := strings.ToLower(*bounty.HunterID)
+		hunterID := ensureAddressFormat(*bounty.HunterID)
 		bounty.HunterID = &hunterID
 	}
 
-	// Log the bounty data for debugging
-	log.Printf("Fetched bounty: %+v", bounty)
-
 	c.JSON(http.StatusOK, bounty)
+}
+
+func ensureAddressFormat(address string) string {
+	address = strings.ToLower(address)
+	if !strings.HasPrefix(address, "0x") {
+		address = "0x" + address
+	}
+	return address
 }
 
 func getBountySubmissions(c *gin.Context) {
@@ -150,6 +156,8 @@ func getBountySubmissions(c *gin.Context) {
 
 	// Check if user is authenticated
 	currentUser := c.GetString("user_id")
+	log.Printf("Current user from context: %s", currentUser)
+	
 	if currentUser == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
 		return
@@ -161,6 +169,8 @@ func getBountySubmissions(c *gin.Context) {
 		return
 	}
 
+	log.Printf("Bounty found: %+v", bounty)
+
 	// Convert all addresses to lowercase for comparison
 	currentUser = strings.ToLower(currentUser)
 	creatorID := strings.ToLower(bounty.CreatorID)
@@ -169,14 +179,21 @@ func getBountySubmissions(c *gin.Context) {
 		hunterID = strings.ToLower(*bounty.HunterID)
 	}
 
+	log.Printf("Comparing addresses - Current User: %s, Creator: %s, Hunter: %s", 
+		currentUser, creatorID, hunterID)
+
 	// Allow both creator and hunter to see submissions
 	if currentUser != creatorID && (bounty.HunterID == nil || hunterID != currentUser) {
+		log.Printf("Access denied - user is neither creator nor hunter")
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only the bounty creator or hunter can view submissions"})
 		return
 	}
 
+	log.Printf("Access granted - fetching submissions")
+
 	var submissions []models.BountySubmission
 	if err := database.DB.Where("bounty_id = ?", id).Find(&submissions).Error; err != nil {
+		log.Printf("Error fetching submissions: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch submissions"})
 		return
 	}
@@ -186,6 +203,7 @@ func getBountySubmissions(c *gin.Context) {
 		submissions[i].HunterID = strings.ToLower(submissions[i].HunterID)
 	}
 
+	log.Printf("Found %d submissions", len(submissions))
 	c.JSON(http.StatusOK, submissions)
 }
 
@@ -324,9 +342,9 @@ func raiseDispute(c *gin.Context) {
 		return
 	}
 
-	// Only creator can raise disputes
+	// Only creator can raise dispute
 	if currentUser != strings.ToLower(bounty.CreatorID) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Only the bounty creator can raise disputes"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only bounty creator can raise dispute"})
 		return
 	}
 
@@ -345,8 +363,10 @@ func raiseDispute(c *gin.Context) {
 		return
 	}
 
-	// Update bounty status to disputed
+	// Update bounty status and store dispute reason
 	bounty.Status = "disputed"
+	bounty.DisputeReason = &input.Reason
+
 	if err := database.DB.Save(&bounty).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bounty status"})
 		return
@@ -379,6 +399,60 @@ func completeBounty(c *gin.Context) {
 
 	// Update bounty status to completed
 	bounty.Status = "completed"
+	if err := database.DB.Save(&bounty).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bounty status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, bounty)
+}
+
+func resolveDispute(c *gin.Context) {
+	id := c.Param("id")
+	currentUser := strings.ToLower(c.GetString("user_id"))
+
+	var bounty models.Bounty
+	if err := database.DB.First(&bounty, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Bounty not found"})
+		return
+	}
+
+	// Only admin can resolve disputes
+	if currentUser != strings.ToLower("0x15b5BDf7a5e0305B9a4bE413383C9b1500C8FCF2") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only admin can resolve disputes"})
+		return
+	}
+
+	// Can only resolve disputed bounties
+	if bounty.Status != "disputed" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Can only resolve disputed bounties"})
+		return
+	}
+
+	var input struct {
+		Winner string `json:"winner" binding:"required"`
+		Resolution string `json:"resolution" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Verify winner is either creator or hunter
+	winner := strings.ToLower(input.Winner)
+	if winner != strings.ToLower(bounty.CreatorID) && (bounty.HunterID == nil || winner != strings.ToLower(*bounty.HunterID)) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Winner must be creator or hunter"})
+		return
+	}
+
+	// Update bounty with resolution info
+	now := time.Now()
+	bounty.Status = "completed"
+	bounty.DisputeWinner = &winner
+	bounty.DisputeResolution = &input.Resolution
+	bounty.ResolvedAt = &now
+
 	if err := database.DB.Save(&bounty).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bounty status"})
 		return

@@ -7,7 +7,7 @@ const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 export const metadata = {
   title: "Lens Bounty Board",
   description:
-    "A decentralized bounty marketplace powered by Lens Protocol and Grass Tokens",
+    "A decentralized bounty marketplace powered by Lens Protocol and MGrass Tokens",
   icon: {
     icon: "/favicon.png",
   },

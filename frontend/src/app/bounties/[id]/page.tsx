@@ -13,6 +13,7 @@ import { useProfile } from '@lens-protocol/react-web'
 import { Card, CardBody, CardHeader, Button, Chip, Textarea, Spinner, Divider } from '@nextui-org/react'
 import { motion } from 'framer-motion'
 import { useWalletAuth } from '@/hooks/useWalletAuth'
+import { buildApiUrl } from '@/constants/api'
 
 interface Bounty {
   id: number
@@ -27,6 +28,9 @@ interface Bounty {
   ipfs_hash: string
   blockchain_id: string
   dispute_reason?: string
+  dispute_winner?: string
+  dispute_resolution?: string
+  resolved_at?: string
 }
 
 interface Submission {
@@ -101,7 +105,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       const authHeader = getAuthHeader()
       if (!authHeader) return
 
-      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bountyId}`, {
+      const response = await fetch(buildApiUrl(`api/v1/bounties/${bountyId}`), {
         headers: {
           'Authorization': authHeader
         }
@@ -126,19 +130,21 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
     if (!bounty || !currentAddress) return
 
     try {
-      // Only proceed if the user is either the creator or hunter
-      const isCreator = currentAddress === bounty.creator_id.toLowerCase()
-      const isHunter = bounty.hunter_id && currentAddress === bounty.hunter_id.toLowerCase()
-
-      if (!isCreator && !isHunter) {
-        console.log('User is neither creator nor hunter')
-        return
-      }
-
       const authHeader = getAuthHeader()
       if (!authHeader) return
 
-      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bountyId}/submissions`, {
+      // Ensure addresses are properly formatted for comparison
+      const formattedCurrentAddress = currentAddress.toLowerCase()
+      const formattedCreatorAddress = bounty.creator_id.toLowerCase()
+      const formattedHunterAddress = bounty.hunter_id ? bounty.hunter_id.toLowerCase() : null
+
+      console.log('Comparing addresses:', {
+        current: formattedCurrentAddress,
+        creator: formattedCreatorAddress,
+        hunter: formattedHunterAddress
+      })
+
+      const response = await fetch(buildApiUrl(`api/v1/bounties/${bountyId}/submissions`), {
         headers: {
           'Authorization': authHeader
         }
@@ -146,7 +152,8 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Failed to fetch submissions')
+        console.error('Failed to fetch submissions:', error)
+        return
       }
 
       const data = await response.json()
@@ -154,7 +161,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
     } catch (error) {
       console.error('Error fetching submissions:', error)
     }
-  }, [bountyId, bounty, currentAddress, getAuthHeader])
+  }, [bounty, currentAddress, bountyId, getAuthHeader])
 
   // Fetch comments
   const fetchComments = useCallback(async () => {
@@ -162,7 +169,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       const authHeader = getAuthHeader()
       if (!authHeader) return
 
-      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bountyId}/comments`, {
+      const response = await fetch(buildApiUrl(`api/v1/bounties/${bountyId}/comments`), {
         headers: {
           'Authorization': authHeader
         }
@@ -219,7 +226,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       if (receipt.status === 'success') {
         // Then update the backend
         console.log('Updating backend about claim...')
-        const claimResponse = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/claim`, {
+        const claimResponse = await fetch(buildApiUrl(`api/v1/bounties/${bounty.id}/claim`), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -243,7 +250,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
         })
 
         // Refetch the bounty to ensure we have the latest state
-        const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}`)
+        const response = await fetch(buildApiUrl(`api/v1/bounties/${bounty.id}`))
         if (response.ok) {
           const updatedBounty = await response.json()
           console.log('Refetched bounty:', updatedBounty)
@@ -295,7 +302,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       if (receipt.status === 'success') {
         // Then update the backend
         console.log('Updating backend about completion...')
-        const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/complete`, {
+        const response = await fetch(buildApiUrl(`api/v1/bounties/${bounty.id}/complete`), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -360,7 +367,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       if (receipt.status === 'success') {
         // Then update the backend
         console.log('Updating backend about dispute...')
-        const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/dispute`, {
+        const response = await fetch(buildApiUrl(`api/v1/bounties/${bounty.id}/dispute`), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -406,7 +413,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
         hunterAddress: address
       })
 
-      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/submit`, {
+      const response = await fetch(buildApiUrl(`api/v1/bounties/${bounty.id}/submit`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -452,7 +459,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
         return
       }
 
-      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/comments`, {
+      const response = await fetch(buildApiUrl(`api/v1/bounties/${bounty.id}/comments`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -561,7 +568,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Reward</h3>
                     <Chip variant="flat" className="bg-white/10">
-                      {bounty.reward} GRASS
+                      {bounty.reward} MGRASS
                     </Chip>
                   </div>
 
@@ -800,6 +807,59 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
             </div>
           )}
 
+          {/* Dispute History Section */}
+          {bounty.dispute_reason && (
+            <div className="mt-8">
+              <Card
+                className="w-full"
+                classNames={{
+                  base: "bg-danger/10 backdrop-blur-lg border-1 border-danger/20",
+                }}
+              >
+                <CardHeader>
+                  <h3 className="text-xl font-semibold">Dispute History</h3>
+                </CardHeader>
+                <CardBody>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-1">Reason for Dispute</h4>
+                      <p className="text-foreground/70">{bounty.dispute_reason}</p>
+                    </div>
+
+                    {bounty.dispute_winner && (
+                      <>
+                        <div>
+                          <h4 className="font-medium mb-1">Resolution</h4>
+                          <p className="text-foreground/70">{bounty.dispute_resolution}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-medium mb-1">Winner</h4>
+                          <div className="flex items-center gap-2">
+                            <Chip
+                              color="success"
+                              variant="flat"
+                            >
+                              {bounty.dispute_winner === bounty.creator_id ? 'Creator' : 'Hunter'}
+                            </Chip>
+                            <span className="text-sm text-foreground/70">
+                              ({bounty.dispute_winner})
+                            </span>
+                          </div>
+                        </div>
+                        {bounty.resolved_at && (
+                          <div>
+                            <h4 className="font-medium mb-1">Resolved On</h4>
+                            <p className="text-foreground/70">{formatDate(bounty.resolved_at)}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
+          )}
+
           {/* Status messages for hunter */}
           {isHunter && (
             <div className="mt-8">
@@ -811,7 +871,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
               {bounty.status === 'completed' && (
                 <div className="text-center p-4 rounded-lg bg-success/20">
                   <p className="text-foreground/70">
-                    🎉 Congratulations! The bounty has been completed and {bounty.reward} GRASS tokens have been transferred to your wallet.
+                    🎉 Congratulations! The bounty has been completed and {bounty.reward} MGRASS tokens have been transferred to your wallet.
                   </p>
                 </div>
               )}
@@ -836,7 +896,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
               {bounty.status === 'completed' && (
                 <div className="text-center p-4 rounded-lg bg-success/20">
                   <p className="text-foreground/70">
-                    ✅ Bounty completed! {bounty.reward} GRASS tokens have been transferred to the hunter.
+                    ✅ Bounty completed! {bounty.reward} MGRASS tokens have been transferred to the hunter.
                   </p>
                 </div>
               )}

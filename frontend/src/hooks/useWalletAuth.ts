@@ -39,7 +39,9 @@ export const useWalletAuth = () => {
     if (!address) return null;
     // Ensure wallet address is lowercase and has 0x prefix
     const formattedAddress = address.toLowerCase();
-    return `Bearer ${formattedAddress.startsWith('0x') ? formattedAddress : `0x${formattedAddress}`}`;
+    // Always include 0x prefix
+    const finalAddress = formattedAddress.startsWith('0x') ? formattedAddress : `0x${formattedAddress}`;
+    return `Bearer ${finalAddress}`;
   }, [address]);
 
   return {

@@ -7,7 +7,7 @@ const validateAddress = (address: string): `0x${string}` => {
 };
 
 export const GRASS_TOKEN_ADDRESS = validateAddress(
-  "0xe1d245F6D2d984f675BC3da8da3E5f4c8f15FdB0"
+  "0xAa56862859C4A23B4B6b44d4F981e77deDc38992"
 ); // Replace with actual address
 export const GRASS_TOKEN_ABI = [
   {

@@ -89,7 +89,7 @@ export default function BountyCard({ bounty, onRefresh }: BountyCardProps) {
         
         <div className="flex justify-between items-center">
           <Chip variant="flat" className="bg-white/10">
-            {formatEther(bounty.reward)} GRASS
+            {formatEther(bounty.reward)} MGRASS
           </Chip>
 
           {address && bounty.status === BountyStatus.Open && bounty.creator !== address && (

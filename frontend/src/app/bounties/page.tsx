@@ -6,6 +6,7 @@ import { useProfile } from '@lens-protocol/react-web'
 import { format } from 'date-fns'
 import { Card, CardBody, Button, Chip, Spinner } from '@nextui-org/react'
 import { motion } from 'framer-motion'
+import { buildApiUrl } from '@/constants/api'
 
 interface Bounty {
   id: number
@@ -27,7 +28,7 @@ export default function BountiesPage() {
   useEffect(() => {
     const fetchBounties = async () => {
       try {
-        const url = new URL(`https://lensbountyboard.xyz/api/v1/bounties`)
+        const url = new URL(buildApiUrl(`api/v1/bounties`))
         if (filter !== 'all') {
           url.searchParams.append('status', filter)
         }
@@ -155,7 +156,7 @@ export default function BountiesPage() {
                               variant="flat"
                               className="bg-white/10"
                             >
-                              {bounty.reward} GRASS
+                              {bounty.reward} MGRASS
                             </Chip>
                             <span className="text-sm text-foreground/70">
                               {format(new Date(bounty.deadline), 'PPP')}

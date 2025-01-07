@@ -86,7 +86,7 @@ export default function Header() {
     ? "Minting..."
     : chainId !== Network.LENS.id
     ? "Switch to Lens Network"
-    : "Mint GRASS";
+    : "Mint MGRASS";
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
@@ -161,7 +161,7 @@ export default function Header() {
                   onClick={handleMint}
                   isLoading={isMinting || isSwitching}
                 >
-                  {isSwitching ? "Switch Network" : "Mint GRASS"}
+                  {isSwitching ? "Switch Network" : "Mint MGRASS"}
                 </Button>
               </div>
             </NavbarItem>
@@ -197,7 +197,7 @@ export default function Header() {
                     onClick={handleMint}
                     isLoading={isMinting || isSwitching}
                   >
-                    {isSwitching ? "Switch Network" : "Mint GRASS"}
+                    {isSwitching ? "Switch Network" : "Mint MGRASS"}
                   </Button>
                 </div>
               )}

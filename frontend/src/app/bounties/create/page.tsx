@@ -30,6 +30,7 @@ import {
   GRASS_TOKEN_ABI,
 } from "@/constants/contracts/GrassToken";
 import { erc20Abi } from "viem";
+import { buildApiUrl } from '@/constants/api'
 
 interface FormData {
   title: string;
@@ -193,7 +194,7 @@ export default function CreateBounty() {
       };
       console.log("Sending payload to backend:", payload);
 
-      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties`, {
+      const response = await fetch(buildApiUrl(`api/v1/bounties`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -348,7 +349,7 @@ export default function CreateBounty() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium flex items-center gap-1">
-                      Reward (GRASS)
+                      Reward (MGRASS)
                       <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -360,7 +361,7 @@ export default function CreateBounty() {
                       min="0.01"
                       step="0.01"
                       variant="bordered"
-                      placeholder="Enter the reward amount in GRASS"
+                      placeholder="Enter the reward amount in MGRASS"
                       classNames={{
                         input: "pt-0",
                         inputWrapper: "pt-0",
@@ -369,7 +370,7 @@ export default function CreateBounty() {
                       errorMessage={errors.reward}
                     />
                     <p className="text-sm text-foreground/70">
-                      Specify the amount of GRASS tokens to reward (e.g., 1.25)
+                      Specify the amount of MGRASS tokens to reward (e.g., 1.25)
                     </p>
                   </div>
 

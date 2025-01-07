@@ -8,6 +8,7 @@ import { Card, CardBody, CardFooter, Button, Spinner, Chip } from '@nextui-org/r
 import { motion } from 'framer-motion'
 import { useWalletAuth } from '@/hooks/useWalletAuth'
 import { WalletConnector } from '@/components/WalletConnector'
+import { buildApiUrl } from '@/constants/api'
 
 export default function Home() {
   const router = useRouter()
@@ -20,7 +21,7 @@ export default function Home() {
     const fetchBounties = async () => {
       try {
         // Fetch all bounties without status filter
-        const response = await fetch(`http://localhost:8080/api/v1/bounties`)
+        const response = await fetch(buildApiUrl('api/v1/bounties'))
         if (!response.ok) {
           throw new Error('Failed to fetch bounties')
         }
@@ -183,7 +184,7 @@ export default function Home() {
                                 variant="shadow"
                                 className="font-medium px-4"
                               >
-                                {bounty.reward} GRASS
+                                {bounty.reward} MGRASS
                               </Chip>
                               <Chip
                                 color="primary"

@@ -5,11 +5,15 @@ import { useParams, useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import { useProfile } from '@lens-protocol/react'
 import { useSession, SessionType } from '@lens-protocol/react-web'
-import { useReadContract } from 'wagmi'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { waitForTransactionReceipt } from '@wagmi/core'
 import { REPUTATION_ABI } from '@/lib/contracts/abis'
-import { Card, CardBody, CardHeader, Button, Chip, Divider, Table, TableColumn, TableHeader, TableRow, TableCell, TableBody, Select, SelectItem, Pagination } from '@nextui-org/react'
+import { Card, CardBody, CardHeader, Button, Chip, Divider, Table, TableColumn, TableHeader, TableRow, TableCell, TableBody, Select, SelectItem, Pagination, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, RadioGroup, Radio, Textarea } from '@nextui-org/react'
 import { motion } from 'framer-motion'
 import { useWalletAuth } from '@/hooks/useWalletAuth'
+import { buildApiUrl } from '@/constants/api'
+import { BOUNTY_BOARD_ADDRESS, BOUNTY_BOARD_ABI } from '@/constants/contracts/BountyBoard'
+import { useConfig } from 'wagmi'
 
 interface Bounty {
   id: number
@@ -21,6 +25,7 @@ interface Bounty {
   deadline: string
   description: string
   created_at: string
+  blockchain_id: number
 }
 
 interface ActionableItem {
@@ -39,13 +44,25 @@ export default function Profile() {
   const [createdBounties, setCreatedBounties] = useState<Bounty[]>([])
   const [claimedBounties, setClaimedBounties] = useState<Bounty[]>([])
   const [actionableItems, setActionableItems] = useState<ActionableItem[]>([])
+  const [disputedBounties, setDisputedBounties] = useState<Bounty[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingBounties, setIsLoadingBounties] = useState(false)
   const [createdPage, setCreatedPage] = useState(1)
   const [claimedPage, setClaimedPage] = useState(1)
+  const [disputedPage, setDisputedPage] = useState(1)
   const [createdFilter, setCreatedFilter] = useState('all')
   const [claimedFilter, setClaimedFilter] = useState('all')
   const [createdSort, setCreatedSort] = useState('newest')
   const [claimedSort, setClaimedSort] = useState('newest')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [selectedBounty, setSelectedBounty] = useState<Bounty | null>(null)
+  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false)
+  const [selectedWinner, setSelectedWinner] = useState<string>('')
+  const [resolution, setResolution] = useState('')
+  const [isResolving, setIsResolving] = useState(false)
+
+  const config = useConfig()
+  const { writeContractAsync } = useWriteContract()
 
   // Get reputation score from smart contract
   const { data: reputationScore } = useReadContract({
@@ -66,88 +83,120 @@ export default function Profile() {
   })
 
   useEffect(() => {
+    const checkIfAdmin = () => {
+      if (address) {
+        const adminAddresses = [
+          '0x15b5BDf7a5e0305B9a4bE413383C9b1500C8FCF2',
+          '0x15b5BDf7a5e0305B9a4bE413383C9b1500C8FCF2'.toLowerCase(),
+        ];
+        setIsAdmin(adminAddresses.includes(address) || adminAddresses.includes(address.toLowerCase()));
+      }
+    }
+    checkIfAdmin()
+  }, [address])
+
+  useEffect(() => {
     const fetchBounties = async () => {
-      if (!isConnected) {
-        console.log('Wallet not connected, attempting to connect...');
-        try {
-          await signIn();
-        } catch (error) {
-          console.error('Failed to connect wallet:', error);
-          return;
-        }
+      if (!isConnected || !address) {
+        return;
       }
 
-      // Use either Lens profile ID or wallet address
-      const userId = session?.type === SessionType.WithProfile ? session.profile.id :
-                    session?.type === SessionType.JustWallet ? session.address.toLowerCase() :
-                    address ? address.toLowerCase() : undefined;
-
-      if (!userId) {
-        console.log('No user ID available, skipping fetch');
+      const authHeader = getAuthHeader();
+      if (!authHeader) {
+        console.error('No auth header available');
         return;
       }
 
       setIsLoading(true);
       try {
-        const formattedUserId = userId.toLowerCase().startsWith('0x') ? userId.toLowerCase() : `0x${userId.toLowerCase()}`
-        const authHeader = getAuthHeader()
-        
-        if (!authHeader) {
-          console.error('No auth header available')
-          return
-        }
-
+        const formattedUserId = address.toLowerCase();
         const headers = {
           'Authorization': authHeader,
           'Content-Type': 'application/json'
+        };
+
+        const [createdResponse, claimedResponse] = await Promise.all([
+          fetch(buildApiUrl(`api/v1/bounties?creator=${formattedUserId}`), { headers }),
+          fetch(buildApiUrl(`api/v1/bounties?hunter=${formattedUserId}`), { headers })
+        ]);
+
+        if (!createdResponse.ok) throw new Error(`Failed to fetch created bounties: ${createdResponse.statusText}`);
+        if (!claimedResponse.ok) throw new Error(`Failed to fetch claimed bounties: ${claimedResponse.statusText}`);
+
+        const [createdData, claimedData] = await Promise.all([
+          createdResponse.json(),
+          claimedResponse.json()
+        ]);
+
+        setCreatedBounties(createdData);
+        setClaimedBounties(claimedData);
+
+        // Fetch disputed bounties only if admin
+        if (isAdmin) {
+          const disputedResponse = await fetch(
+            buildApiUrl(`api/v1/bounties?status=disputed`),
+            { headers }
+          );
+          if (!disputedResponse.ok) throw new Error(`Failed to fetch disputed bounties: ${disputedResponse.statusText}`);
+          const disputedData = await disputedResponse.json();
+          setDisputedBounties(disputedData);
         }
 
-        // Fetch created bounties
-        const createdResponse = await fetch(
-          `https://lensbountyboard.xyz/api/v1/bounties?creator=${formattedUserId}`,
-          { headers }
-        )
-        if (!createdResponse.ok) throw new Error(`Failed to fetch created bounties: ${createdResponse.statusText}`)
-        const createdData = await createdResponse.json()
-        setCreatedBounties(createdData)
-
-        // Fetch claimed bounties
-        const claimedResponse = await fetch(
-          `https://lensbountyboard.xyz/api/v1/bounties?hunter=${formattedUserId}`,
-          { headers }
-        )
-        if (!claimedResponse.ok) throw new Error(`Failed to fetch claimed bounties: ${claimedResponse.statusText}`)
-        const claimedData = await claimedResponse.json()
-        setClaimedBounties(claimedData)
-
         // Generate actionable items
-        const actions: ActionableItem[] = []
+        const actions = createdData
+          .filter((bounty: Bounty) => bounty.status === 'claimed')
+          .map((bounty: Bounty) => ({
+            bountyId: bounty.id,
+            title: bounty.title,
+            action: 'Review submission',
+            status: 'pending_review',
+            deadline: bounty.deadline
+          }));
 
-        // For creators: Add actions for claimed bounties that need review
-        createdData.forEach((bounty: Bounty) => {
-          if (bounty.status === 'claimed') {
-            actions.push({
-              bountyId: bounty.id,
-              title: bounty.title,
-              action: 'Review submission',
-              status: 'pending_review',
-              deadline: bounty.deadline
-            })
-          }
-        })
-
-        setActionableItems(actions)
+        setActionableItems(actions);
       } catch (error) {
-        console.error('Error fetching bounties:', error)
+        console.error('Error fetching bounties:', error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    if (isConnected) {
-      fetchBounties()
+    fetchBounties();
+  }, [isConnected, address, getAuthHeader, isAdmin])
+
+  const fetchDisputedBounties = async () => {
+    if (!address) return;
+
+    setIsLoadingBounties(true);
+    try {
+      const authHeader = getAuthHeader();
+      if (!authHeader) return;
+
+      const response = await fetch(
+        buildApiUrl('api/v1/bounties?status=disputed'),
+        {
+          headers: {
+            'Authorization': authHeader
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch disputed bounties');
+      }
+
+      const data = await response.json();
+      setDisputedBounties(data);
+    } catch (error) {
+      console.error('Error fetching disputed bounties:', error);
+    } finally {
+      setIsLoadingBounties(false);
     }
-  }, [session, getAuthHeader, isConnected, signIn, address])
+  };
+
+  useEffect(() => {
+    fetchDisputedBounties();
+  }, [address]);
 
   const filteredCreatedBounties = createdBounties
     .filter(bounty => createdFilter === 'all' ? true : bounty.status === createdFilter)
@@ -186,6 +235,87 @@ export default function Profile() {
     (claimedPage - 1) * ITEMS_PER_PAGE,
     claimedPage * ITEMS_PER_PAGE
   );
+
+  const handleResolveDispute = async () => {
+    if (!selectedBounty || !selectedWinner || !resolution || !writeContractAsync) return;
+
+    setIsResolving(true);
+    try {
+      const authHeader = getAuthHeader();
+      if (!authHeader) {
+        throw new Error('No auth header available');
+      }
+
+      console.log('Resolving dispute on blockchain...', {
+        bountyId: selectedBounty.blockchain_id,
+        winner: selectedWinner,
+        resolution: resolution,
+      });
+
+      // First call the smart contract
+      const hash = await writeContractAsync({
+        address: BOUNTY_BOARD_ADDRESS,
+        abi: BOUNTY_BOARD_ABI,
+        functionName: 'resolveDispute',
+        // @ts-ignore
+        args: [BigInt(selectedBounty.blockchain_id), selectedWinner, resolution],
+        gas: BigInt(30000000),
+      });
+
+      console.log('Transaction hash:', hash);
+
+      // Wait for transaction confirmation
+      const receipt = await waitForTransactionReceipt(config, {
+        hash,
+        chainId: 37111,
+      });
+
+      console.log('Transaction receipt:', receipt);
+
+      if (receipt.status === 'success') {
+        // Then update the backend
+        console.log('Updating backend about resolution...');
+        const response = await fetch(
+          buildApiUrl(`api/v1/bounties/${selectedBounty.id}/resolve`),
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': authHeader,
+            },
+            body: JSON.stringify({
+              winner: selectedWinner,
+              resolution: resolution,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to update backend');
+        }
+
+        const updatedBounty = await response.json();
+        console.log('Resolution completed:', updatedBounty);
+
+        // Refresh the disputed bounties list
+        fetchDisputedBounties();
+        setIsResolveModalOpen(false);
+        setSelectedBounty(null);
+        setSelectedWinner('');
+        setResolution('');
+        
+        alert('Dispute resolved successfully!');
+      } else {
+        throw new Error('Blockchain transaction failed');
+      }
+    } catch (error) {
+      console.error('Error resolving dispute:', error);
+      alert(error instanceof Error ? error.message : 'Failed to resolve dispute');
+    } finally {
+      setIsResolving(false);
+    }
+  };
 
   if (!session) {
     return (
@@ -405,7 +535,7 @@ export default function Profile() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-small">{bounty.reward} GRASS</span>
+                      <span className="text-small">{bounty.reward} MGRASS</span>
                     </TableCell>
                     <TableCell>
                       <Chip
@@ -538,7 +668,7 @@ export default function Profile() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-small">{bounty.reward} GRASS</span>
+                      <span className="text-small">{bounty.reward} MGRASS</span>
                     </TableCell>
                     <TableCell>
                       <Chip
@@ -577,8 +707,164 @@ export default function Profile() {
               </TableBody>
             </Table>
           </Card>
+
+          {/* Admin Dispute Resolution Section */}
+          {isAdmin && (
+            <Card className="w-full mb-6">
+              <CardHeader className="flex justify-between items-center px-6 py-4">
+                <div>
+                  <h2 className="text-xl font-bold">Disputed Bounties</h2>
+                  <p className="text-small text-default-500">Bounties requiring admin resolution</p>
+                </div>
+              </CardHeader>
+              <Table 
+                aria-label="Disputed bounties"
+                bottomContent={
+                  <div className="flex w-full justify-center">
+                    <Pagination
+                      isCompact
+                      showControls
+                      showShadow
+                      color="primary"
+                      page={disputedPage}
+                      total={Math.ceil(disputedBounties.length / ITEMS_PER_PAGE)}
+                      onChange={(page) => setDisputedPage(page)}
+                    />
+                  </div>
+                }
+                classNames={{
+                  base: "bg-background/40 dark:bg-default-100/20 backdrop-blur-lg",
+                  th: "bg-transparent text-default-500",
+                  td: "py-3"
+                }}
+              >
+                <TableHeader>
+                  <TableColumn>TITLE</TableColumn>
+                  <TableColumn>REWARD</TableColumn>
+                  <TableColumn>CREATOR</TableColumn>
+                  <TableColumn>HUNTER</TableColumn>
+                  <TableColumn>DISPUTE REASON</TableColumn>
+                  <TableColumn>ACTIONS</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {disputedBounties
+                    .slice((disputedPage - 1) * ITEMS_PER_PAGE, disputedPage * ITEMS_PER_PAGE)
+                    .map((bounty) => (
+                      <TableRow key={bounty.id}>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="text-small font-semibold">{bounty.title}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-small">{bounty.reward} MGRASS</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-small text-default-500">
+                            {bounty.creator_id.substring(0, 6)}...{bounty.creator_id.substring(38)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-small text-default-500">
+                            {bounty.hunter_id ? `${bounty.hunter_id.substring(0, 6)}...${bounty.hunter_id.substring(38)}` : 'No Hunter'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-small text-default-500">
+                            {bounty.description}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            color="warning"
+                            variant="flat"
+                            onPress={() => {
+                              setSelectedBounty(bounty);
+                              setIsResolveModalOpen(true);
+                            }}
+                          >
+                            Resolve
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
         </motion.div>
       </main>
+
+      {/* Dispute Resolution Modal */}
+      <Modal 
+        isOpen={isResolveModalOpen} 
+        onClose={() => {
+          setIsResolveModalOpen(false);
+          setSelectedBounty(null);
+          setSelectedWinner('');
+          setResolution('');
+        }}
+        size="2xl"
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                Resolve Dispute
+              </ModalHeader>
+              <ModalBody>
+                {selectedBounty && (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">{selectedBounty.title}</h3>
+                      <p className="text-small text-default-500">{selectedBounty.description}</p>
+                    </div>
+                    <Divider />
+                    <div>
+                      <h4 className="text-medium mb-2">Select Winner</h4>
+                      <RadioGroup
+                        value={selectedWinner}
+                        onValueChange={setSelectedWinner}
+                      >
+                        <Radio value={selectedBounty.creator_id}>
+                          Creator ({selectedBounty.creator_id.substring(0, 6)}...{selectedBounty.creator_id.substring(38)})
+                        </Radio>
+                        <Radio value={selectedBounty.hunter_id || ''}>
+                          Hunter ({selectedBounty.hunter_id?.substring(0, 6)}...{selectedBounty.hunter_id?.substring(38)})
+                        </Radio>
+                      </RadioGroup>
+                    </div>
+                    <Divider />
+                    <div>
+                      <h4 className="text-medium mb-2">Resolution Notes</h4>
+                      <Textarea
+                        placeholder="Explain your decision..."
+                        value={resolution}
+                        onChange={(e) => setResolution(e.target.value)}
+                        minRows={3}
+                      />
+                    </div>
+                  </div>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Cancel
+                </Button>
+                <Button 
+                  color="primary" 
+                  onPress={handleResolveDispute}
+                  isLoading={isResolving}
+                  isDisabled={!selectedWinner || !resolution}
+                >
+                  Resolve Dispute
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   )
 }
