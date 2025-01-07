@@ -193,7 +193,7 @@ export default function CreateBounty() {
       };
       console.log("Sending payload to backend:", payload);
 
-      const response = await fetch(`http://localhost:8080/api/v1/bounties`, {
+      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

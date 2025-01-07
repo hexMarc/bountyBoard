@@ -101,7 +101,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       const authHeader = getAuthHeader()
       if (!authHeader) return
 
-      const response = await fetch(`http://localhost:8080/api/v1/bounties/${bountyId}`, {
+      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bountyId}`, {
         headers: {
           'Authorization': authHeader
         }
@@ -129,7 +129,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       const authHeader = getAuthHeader()
       if (!authHeader) return
 
-      const response = await fetch(`http://localhost:8080/api/v1/bounties/${bountyId}/submissions`, {
+      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bountyId}/submissions`, {
         headers: {
           'Authorization': authHeader
         }
@@ -153,7 +153,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       const authHeader = getAuthHeader()
       if (!authHeader) return
 
-      const response = await fetch(`http://localhost:8080/api/v1/bounties/${bountyId}/comments`, {
+      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bountyId}/comments`, {
         headers: {
           'Authorization': authHeader
         }
@@ -210,7 +210,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       if (receipt.status === 'success') {
         // Then update the backend
         console.log('Updating backend about claim...')
-        const claimResponse = await fetch(`http://localhost:8080/api/v1/bounties/${bounty.id}/claim`, {
+        const claimResponse = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/claim`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -234,7 +234,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
         })
 
         // Refetch the bounty to ensure we have the latest state
-        const response = await fetch(`http://localhost:8080/api/v1/bounties/${bounty.id}`)
+        const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}`)
         if (response.ok) {
           const updatedBounty = await response.json()
           console.log('Refetched bounty:', updatedBounty)
@@ -286,7 +286,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       if (receipt.status === 'success') {
         // Then update the backend
         console.log('Updating backend about completion...')
-        const response = await fetch(`http://localhost:8080/api/v1/bounties/${bounty.id}/complete`, {
+        const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/complete`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -351,7 +351,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
       if (receipt.status === 'success') {
         // Then update the backend
         console.log('Updating backend about dispute...')
-        const response = await fetch(`http://localhost:8080/api/v1/bounties/${bounty.id}/dispute`, {
+        const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/dispute`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -397,7 +397,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
         hunterAddress: address
       })
 
-      const response = await fetch(`http://localhost:8080/api/v1/bounties/${bounty.id}/submit`, {
+      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -443,7 +443,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
         return
       }
 
-      const response = await fetch(`http://localhost:8080/api/v1/bounties/${bounty.id}/comments`, {
+      const response = await fetch(`https://lensbountyboard.xyz/api/v1/bounties/${bounty.id}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

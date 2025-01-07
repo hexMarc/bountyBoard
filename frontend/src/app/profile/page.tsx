@@ -104,7 +104,7 @@ export default function Profile() {
 
         // Fetch created bounties
         const createdResponse = await fetch(
-          `http://localhost:8080/api/v1/bounties?creator=${formattedUserId}`,
+          `https://lensbountyboard.xyz/api/v1/bounties?creator=${formattedUserId}`,
           { headers }
         )
         if (!createdResponse.ok) throw new Error(`Failed to fetch created bounties: ${createdResponse.statusText}`)
@@ -113,7 +113,7 @@ export default function Profile() {
 
         // Fetch claimed bounties
         const claimedResponse = await fetch(
-          `http://localhost:8080/api/v1/bounties?hunter=${formattedUserId}`,
+          `https://lensbountyboard.xyz/api/v1/bounties?hunter=${formattedUserId}`,
           { headers }
         )
         if (!claimedResponse.ok) throw new Error(`Failed to fetch claimed bounties: ${claimedResponse.statusText}`)
