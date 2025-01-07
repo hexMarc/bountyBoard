@@ -1,64 +1,47 @@
-# Lens Bounty Board
+# Lens Bounty Board 🎯
 
-A decentralized platform leveraging Lens Protocol and Grass Tokens to create a bounty marketplace where users can post, claim, and complete microtasks.
+A decentralized marketplace where you can post tasks, earn rewards, and build your reputation using Lens Protocol!
 
-## Overview
+## ✨ What You Can Do
 
-The Lens Bounty Board is a decentralized marketplace that enables users to:
-- Post and manage bounties with Grass token rewards
-- Claim and complete tasks
-- Build reputation through successful task completion
-- Authenticate using Lens Protocol
-- Earn NFT badges for achievements
+- **Post Tasks**: Create bounties for anything you need help with
+- **Earn Rewards**: Complete tasks and earn MGrass tokens
+- **Build Reputation**: Successfully completing tasks builds your on-chain reputation
+- **Get Recognized[TODO]**: Earn special NFT badges for your achievements
+- **Connect with Lens**: Use your Lens profile to participate in the ecosystem
 
-## Project Structure
+## 🚀 Getting Started
 
-```
-bountyBoard/
-├── frontend/          # Next.js frontend application
-├── backend/           # Golang/Gin API server
-├── contracts/         # Smart contracts
-└── shared/           # Shared types and utilities
-```
+1. Visit our platform at [https://lensbountyboard.xyz/]
+2. Connect your wallet using the "Connect" button
+3. Browse available bounties or create your own
+4. Start earning or finding help!
 
-## Prerequisites
+## 💡 Features
 
-- Node.js >= 18
-- Go >= 1.21
-- Docker
-- PostgreSQL
-- Grass RPC access
-- Lens Protocol API keys
+### For Task Creators
+- Post bounties with custom rewards
+- Set task requirements and deadlines
+- Review submissions
+- Release payments securely
 
-## Quick Start
+### For Task Hunters
+- Browse available tasks
+- Claim bounties that match your skills
+- Submit your work
+- Get paid automatically upon approval
 
-1. Clone the repository
-2. Copy `.env.example` to `.env` and fill in required values
-3. Install dependencies:
-   ```bash
-   # Install frontend dependencies
-   cd frontend && npm install
+## 🛠️ Local Development
 
-   # Install backend dependencies
-   cd backend && go mod download
-   ```
-
-4. Start development servers:
-   ```bash
-   # Start frontend
-   cd frontend && npm run dev
-
-   # Start backend
-   cd backend && go run main.go
-   ```
-
-## Development
-
-Refer to individual README files in each directory for specific setup instructions:
-- [Frontend Development](./frontend/README.md)
-- [Backend Development](./backend/README.md)
+Want to run the project locally? Check out our setup guides:
+- [Frontend Setup](./frontend/README.md)
+- [Backend Setup](./backend/README.md)
 - [Smart Contracts](./contracts/README.md)
 
-## License
+## 🤝 Contributing
+
+We welcome contributions! Check out our individual component guides for detailed setup instructions.
+
+## 📝 License
 
 MIT

@@ -25,9 +25,7 @@ Our Go backend handles API requests and database operations for the Bounty Board
 
 - RESTful API endpoints
 - PostgreSQL database integration
-- Lens Protocol integration
 - Task management system
-- User authentication
 
 ## API Routes 🛣️
 
@@ -36,30 +34,3 @@ Our Go backend handles API requests and database operations for the Bounty Board
 - `/api/submissions`: Task submissions
 - `/api/achievements`: User achievements
 
-## Development 💻
-
-### Database Setup
-
-1. Install PostgreSQL
-2. Create database:
-   ```sql
-   CREATE DATABASE bountyboard;
-   ```
-3. Run migrations:
-   ```bash
-   go run cmd/migrate/main.go
-   ```
-
-### Docker Support 🐳
-
-Build and run with Docker:
-```bash
-docker build -t bountyboard-backend .
-docker run -p 8080:8080 bountyboard-backend
-```
-
-## Testing 🧪
-
-Run tests:
-```bash
-go test ./...
