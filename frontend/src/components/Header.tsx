@@ -8,7 +8,6 @@ import { ConnectKitButton } from 'connectkit'
 import { parseEther } from 'viem'
 import { Network } from '@/constants/contracts'
 import { useRouter } from 'next/navigation'
-import { useClaimableRewards } from '@/hooks/useClaimableRewards'
 
 const navigation = [
   { name: 'Dashboard', href: '/' },
@@ -30,9 +29,6 @@ export default function Header() {
   const { isLoading: isMinting } = useTransaction({
     hash: mintData,
   })
-
-  const { formattedRewards } = useClaimableRewards()
-  const hasRewards = Number(formattedRewards) > 0
 
   const handleMint = async () => {
     if (!address) return
@@ -147,16 +143,6 @@ export default function Header() {
                 >
                   {isSwitching ? 'Switch Network' : 'Mint GRASS'}
                 </Button>
-                {hasRewards && (
-                  <Button
-                    color="warning"
-                    variant="ghost"
-                    onClick={() => router.push('/profile')}
-                    endContent={<span className="text-sm">({formattedRewards} GRASS)</span>}
-                  >
-                    Claim Rewards
-                  </Button>
-                )}
               </div>
             </NavbarItem>
           )}
@@ -193,16 +179,6 @@ export default function Header() {
                   >
                     {isSwitching ? 'Switch Network' : 'Mint GRASS'}
                   </Button>
-                  {hasRewards && (
-                    <Button
-                      color="warning"
-                      variant="ghost"
-                      onClick={() => router.push('/profile')}
-                      endContent={<span className="text-sm">({formattedRewards} GRASS)</span>}
-                    >
-                      Claim Rewards
-                    </Button>
-                  )}
                 </div>
               )}
               <ConnectKitButton />

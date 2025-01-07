@@ -1,4 +1,4 @@
-import { useWriteContract, useReadContract, useAccount } from 'wagmi'
+import { useWriteContract, useReadContract, useAccount, useConfig } from 'wagmi'
 import { parseEther } from 'viem'
 import { BOUNTY_BOARD_ADDRESS, BOUNTY_BOARD_ABI } from '@/constants/contracts/BountyBoard'
 
@@ -21,7 +21,8 @@ export interface Bounty {
 
 export function useBountyBoard() {
   const { address } = useAccount()
-  const { writeContract: write } = useWriteContract()
+  const { writeContractAsync } = useWriteContract()
+  const config = useConfig()
 
   const { data: nextBountyId = 0n } = useReadContract({
     address: BOUNTY_BOARD_ADDRESS,
@@ -56,7 +57,7 @@ export function useBountyBoard() {
   const createBounty = async (reward: number, metadata: string) => {
     if (!address) return
     
-    return write({
+    return writeContractAsync({
       address: BOUNTY_BOARD_ADDRESS,
       abi: BOUNTY_BOARD_ABI,
       functionName: 'createBounty',
@@ -67,29 +68,34 @@ export function useBountyBoard() {
   const claimBounty = async (bountyId: bigint) => {
     if (!address) return
 
-    return write({
+    console.log('Attempting to claim bounty with ID:', bountyId)
+    const tx = await writeContractAsync({
       address: BOUNTY_BOARD_ADDRESS,
       abi: BOUNTY_BOARD_ABI,
       functionName: 'claimBounty',
       args: [bountyId],
     })
+    console.log('Transaction response:', tx)
+    return tx
   }
 
   const completeBounty = async (bountyId: bigint) => {
     if (!address) return
 
-    return write({
+    const hash = await writeContractAsync({
       address: BOUNTY_BOARD_ADDRESS,
       abi: BOUNTY_BOARD_ABI,
       functionName: 'completeBounty',
       args: [bountyId],
     })
+
+    return hash
   }
 
   const raiseBountyDispute = async (bountyId: bigint, reason: string) => {
     if (!address) return
 
-    return write({
+    return writeContractAsync({
       address: BOUNTY_BOARD_ADDRESS,
       abi: BOUNTY_BOARD_ABI,
       functionName: 'raiseBountyDispute',
@@ -100,10 +106,11 @@ export function useBountyBoard() {
   const resolveDispute = async (bountyId: bigint, winner: string, resolution: string) => {
     if (!address) return
 
-    return write({
+    return writeContractAsync({
       address: BOUNTY_BOARD_ADDRESS,
       abi: BOUNTY_BOARD_ABI,
       functionName: 'resolveDispute',
+      // @ts-ignore
       args: [bountyId, winner, resolution],
     })
   }

@@ -3,6 +3,8 @@ import { Card, CardBody, Button, Chip } from '@nextui-org/react'
 import { useAccount } from 'wagmi'
 import { formatEther } from 'viem'
 import { useBountyBoard, Bounty, BountyStatus } from '@/hooks/useBountyBoard'
+import { waitForTransactionReceipt } from '@wagmi/core'
+import { useConfig } from 'wagmi'
 
 interface BountyCardProps {
   bounty: Bounty
@@ -13,15 +15,21 @@ export default function BountyCard({ bounty, onRefresh }: BountyCardProps) {
   const { address } = useAccount()
   const { claimBounty, completeBounty, raiseBountyDispute } = useBountyBoard()
   const [isLoading, setIsLoading] = useState(false)
+  const config = useConfig()
 
   const handleClaimBounty = async () => {
     if (!address) return
     setIsLoading(true)
     try {
       const tx = await claimBounty(bounty.id)
-      if (tx) {
-        await tx.wait()
+      if (tx !== undefined) {
+        await waitForTransactionReceipt(config, {
+          hash: tx,
+          chainId: 37111, // Specify the chainId as needed
+        })
         onRefresh()
+      } else {
+        console.error('Transaction was not created. Please check the contract interaction.')
       }
     } catch (error) {
       console.error('Error claiming bounty:', error)
@@ -34,11 +42,14 @@ export default function BountyCard({ bounty, onRefresh }: BountyCardProps) {
     if (!address) return
     setIsLoading(true)
     try {
-      const tx = await completeBounty(bounty.id)
-      if (tx) {
-        await tx.wait()
-        onRefresh()
-      }
+      const result = await completeBounty(bounty.id)
+      if (!result) return
+      
+      await waitForTransactionReceipt(config, {
+        hash: result,
+        chainId: 37111,
+      })
+      onRefresh()
     } catch (error) {
       console.error('Error completing bounty:', error)
     } finally {

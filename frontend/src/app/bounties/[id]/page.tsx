@@ -46,8 +46,10 @@ interface Comment {
 }
 
 // BountyDetailPage - Server Component
-export default async function BountyDetailPage({ params }: { params: { id: string } }) {
-  return <BountyDetailClient bountyId={params.id} />
+export default async function BountyDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
+  return <BountyDetailClient bountyId={id} />
 }
 
 // BountyDetailClient - Client Component

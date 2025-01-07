@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useWalletAuth } from '@/hooks/useLensAuth';
+import { useWalletAuth } from '@/hooks/useWalletAuth';
 import { useBalance } from 'wagmi';
 import { formatEther } from 'viem';
 import { Button } from '@nextui-org/react';

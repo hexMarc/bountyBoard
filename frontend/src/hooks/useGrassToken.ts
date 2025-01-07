@@ -42,16 +42,14 @@ export function useGrassToken() {
     address: GRASS_TOKEN_ADDRESS,
     abi: GRASS_TOKEN_ABI,
     functionName: 'balanceOf',
-    args: [address!],
-    enabled: !!address,
+    args: address ? [address] : undefined,
   })
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: GRASS_TOKEN_ADDRESS,
     abi: GRASS_TOKEN_ABI,
     functionName: 'allowance',
-    args: [address!, BOUNTY_BOARD_ADDRESS],
-    enabled: !!address,
+    args: address ? [address, BOUNTY_BOARD_ADDRESS] : undefined,
   })
 
   const approve = async (amount: string) => {
