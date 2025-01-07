@@ -34,7 +34,6 @@ func RegisterBountyRoutes(router *gin.Engine) {
 	{
 		v1.GET("/bounties", listBounties)
 		v1.GET("/bounties/:id", getBounty)
-		v1.GET("/bounties/:id/submissions", getBountySubmissions)
 		v1.GET("/bounties/:id/comments", getBountyComments)
 	}
 
@@ -43,6 +42,7 @@ func RegisterBountyRoutes(router *gin.Engine) {
 	protected.Use(middleware.WalletAuth())
 	{
 		protected.POST("/bounties", createBounty)
+		protected.GET("/bounties/:id/submissions", getBountySubmissions)  
 		protected.POST("/bounties/:id/claim", claimBounty)
 		protected.POST("/bounties/:id/submit", submitBounty)
 		protected.POST("/bounties/:id/dispute", raiseDispute)
@@ -148,16 +148,29 @@ func getBounty(c *gin.Context) {
 func getBountySubmissions(c *gin.Context) {
 	id := c.Param("id")
 
+	// Check if user is authenticated
+	currentUser := c.GetString("user_id")
+	if currentUser == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
 	var bounty models.Bounty
 	if err := database.DB.First(&bounty, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bounty not found"})
 		return
 	}
 
+	// Convert all addresses to lowercase for comparison
+	currentUser = strings.ToLower(currentUser)
+	creatorID := strings.ToLower(bounty.CreatorID)
+	var hunterID string
+	if bounty.HunterID != nil {
+		hunterID = strings.ToLower(*bounty.HunterID)
+	}
+
 	// Allow both creator and hunter to see submissions
-	currentUser := strings.ToLower(c.GetString("user_id"))
-	if currentUser != strings.ToLower(bounty.CreatorID) &&
-		(bounty.HunterID == nil || strings.ToLower(*bounty.HunterID) != currentUser) {
+	if currentUser != creatorID && (bounty.HunterID == nil || hunterID != currentUser) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Only the bounty creator or hunter can view submissions"})
 		return
 	}
@@ -166,6 +179,11 @@ func getBountySubmissions(c *gin.Context) {
 	if err := database.DB.Where("bounty_id = ?", id).Find(&submissions).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch submissions"})
 		return
+	}
+
+	// Convert all hunter IDs to lowercase for consistency
+	for i := range submissions {
+		submissions[i].HunterID = strings.ToLower(submissions[i].HunterID)
 	}
 
 	c.JSON(http.StatusOK, submissions)

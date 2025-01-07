@@ -123,9 +123,18 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
 
   // Fetch submissions
   const fetchSubmissions = useCallback(async () => {
-    if (!bounty) return
+    if (!bounty || !currentAddress) return
 
     try {
+      // Only proceed if the user is either the creator or hunter
+      const isCreator = currentAddress === bounty.creator_id.toLowerCase()
+      const isHunter = bounty.hunter_id && currentAddress === bounty.hunter_id.toLowerCase()
+
+      if (!isCreator && !isHunter) {
+        console.log('User is neither creator nor hunter')
+        return
+      }
+
       const authHeader = getAuthHeader()
       if (!authHeader) return
 
@@ -145,7 +154,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
     } catch (error) {
       console.error('Error fetching submissions:', error)
     }
-  }, [bountyId, bounty, getAuthHeader])
+  }, [bountyId, bounty, currentAddress, getAuthHeader])
 
   // Fetch comments
   const fetchComments = useCallback(async () => {
@@ -473,7 +482,7 @@ function BountyDetailClient({ bountyId }: { bountyId: string }) {
 
   useEffect(() => {
     fetchSubmissions()
-  }, [fetchSubmissions])
+  }, [fetchSubmissions, bounty, currentAddress])
 
   useEffect(() => {
     fetchComments()
