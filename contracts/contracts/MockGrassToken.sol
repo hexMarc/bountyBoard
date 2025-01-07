@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MockGrassToken is ERC20, Ownable {
-    constructor() ERC20("Mock Grass Token", "GRASS") Ownable(msg.sender) {}
+    constructor() ERC20("Mock Grass Token", "MGRASS") Ownable(msg.sender) {}
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);

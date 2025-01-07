@@ -1221,8 +1221,8 @@
       ]
     },
     "E:\\docs\\@archive\\2024\\lens-network-hackathon\\bountyBoard\\contracts\\contracts\\MockGrassToken.sol": {
-      "lastModificationDate": 1736241767193,
-      "contentHash": "3ab1df56cecbfae2cbdcf471c969c201",
+      "lastModificationDate": 1736243911739,
+      "contentHash": "6e412c0c332fc6f473349e2ee8fa4183",
       "sourceName": "contracts/MockGrassToken.sol",
       "solcConfig": {
         "version": "0.8.20",

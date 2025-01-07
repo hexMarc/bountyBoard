@@ -1,5 +1,5 @@
 export const BOUNTY_BOARD_ADDRESS =
-  "0xb801E50019eF40A82caE0c389092e43AA4e719E3"; // Replace with actual address
+  "0x88320034c5E9260FB5a457D2FB5995204FEEA89E"; // Replace with actual address
 
 export const BOUNTY_BOARD_ABI = [
   {

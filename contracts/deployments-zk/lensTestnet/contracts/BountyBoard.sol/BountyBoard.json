@@ -439,6 +439,16 @@
       "factoryDeps": [],
       "address": "0xb801E50019eF40A82caE0c389092e43AA4e719E3",
       "txHash": "0x0f4c48d4c3f33545baed7a42bf4ac0538b21a45a420cbf8a5ba15f9f7dd829b6"
+    },
+    {
+      "constructorArgs": [
+        "0xe1d245F6D2d984f675BC3da8da3E5f4c8f15FdB0"
+      ],
+      "salt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "deploymentType": "create",
+      "factoryDeps": [],
+      "address": "0x88320034c5E9260FB5a457D2FB5995204FEEA89E",
+      "txHash": "0xd87cd9d7eab1e4ab06c256a3a436a58fdd154b86c3a6166df54ff2095a2046ac"
     }
   ]
 }
