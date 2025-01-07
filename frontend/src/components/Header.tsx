@@ -1,78 +1,97 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { usePathname } from 'next/navigation'
-import { Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenuToggle, NavbarMenu, NavbarMenuItem, Link, Button } from '@nextui-org/react'
-import { useAccount, useWriteContract, useTransaction, useChainId, useSwitchChain } from 'wagmi'
-import { ConnectKitButton } from 'connectkit'
-import { parseEther } from 'viem'
-import { Network } from '@/constants/contracts'
-import { useRouter } from 'next/navigation'
+import { useState } from "react";
+import { usePathname } from "next/navigation";
+import {
+  Navbar,
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  NavbarMenuToggle,
+  NavbarMenu,
+  NavbarMenuItem,
+  Link,
+  Button,
+} from "@nextui-org/react";
+import {
+  useAccount,
+  useWriteContract,
+  useTransaction,
+  useChainId,
+  useSwitchChain,
+} from "wagmi";
+import { ConnectKitButton } from "connectkit";
+import { parseEther } from "viem";
+import { Network } from "@/constants/contracts";
+import { useRouter } from "next/navigation";
+import { GRASS_TOKEN_ADDRESS } from "@/constants/contracts/GrassToken";
 
 const navigation = [
-  { name: 'Dashboard', href: '/' },
-  { name: 'Bounties', href: '/bounties' },
-  { name: 'Create', href: '/bounties/create' },
-  { name: 'Profile', href: '/profile' },
-]
+  { name: "Dashboard", href: "/" },
+  { name: "Bounties", href: "/bounties" },
+  { name: "Create", href: "/bounties/create" },
+  { name: "Profile", href: "/profile" },
+];
 
 export default function Header() {
-  const { isConnected, address } = useAccount()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const pathname = usePathname()
-  const chainId = useChainId()
-  const { switchChain, isPending: isSwitching } = useSwitchChain()
-  const router = useRouter()
+  const { isConnected, address } = useAccount();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const chainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
+  const router = useRouter();
 
-  const { writeContract: mint, data: mintData } = useWriteContract()
+  const { writeContract: mint, data: mintData } = useWriteContract();
 
   const { isLoading: isMinting } = useTransaction({
     hash: mintData,
-  })
+  });
 
   const handleMint = async () => {
-    if (!address) return
-    
+    if (!address) return;
+
     try {
       // Switch to Lens Network if not already on it
       if (chainId !== Network.LENS.id) {
-        await switchChain({ chainId: Network.LENS.id })
-        return // Will retry after chain switch
+        await switchChain({ chainId: Network.LENS.id });
+        return; // Will retry after chain switch
       }
-      
-      mint({
-        address: '0xAD60B865A87Bb0e7224027912D771f360aF02e4A', // Replace with actual deployed address
-        abi: [{
-          name: 'mint',
-          type: 'function',
-          stateMutability: 'nonpayable',
-          inputs: [
-            { name: 'to', type: 'address' },
-            { name: 'amount', type: 'uint256' }
-          ],
-          outputs: []
-        }],
-        functionName: 'mint',
-        args: [address, parseEther('10000')] // Minting 10000 GRASS tokens
-      })
-    } catch (error) {
-      console.error('Error minting:', error)
-    }
-  }
 
-  const isLoading = isMinting || isSwitching
-  const buttonText = isSwitching 
-    ? 'Switching Network...' 
-    : isMinting 
-      ? 'Minting...' 
-      : chainId !== Network.LENS.id 
-        ? 'Switch to Lens Network' 
-        : 'Mint GRASS'
+      mint({
+        address: GRASS_TOKEN_ADDRESS, // Replace with actual deployed address
+        abi: [
+          {
+            name: "mint",
+            type: "function",
+            stateMutability: "nonpayable",
+            inputs: [
+              { name: "to", type: "address" },
+              { name: "amount", type: "uint256" },
+            ],
+            outputs: [],
+          },
+        ],
+        functionName: "mint",
+        args: [address, parseEther("10000")], // Minting 10000 GRASS tokens
+      });
+    } catch (error) {
+      console.error("Error minting:", error);
+    }
+  };
+
+  const isLoading = isMinting || isSwitching;
+  const buttonText = isSwitching
+    ? "Switching Network..."
+    : isMinting
+    ? "Minting..."
+    : chainId !== Network.LENS.id
+    ? "Switch to Lens Network"
+    : "Mint GRASS";
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
       <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-primary-400/5 to-primary-500/10 backdrop-blur-xl" />
-      <Navbar 
+      <Navbar
         maxWidth="xl"
         isMenuOpen={isMenuOpen}
         onMenuOpenChange={setIsMenuOpen}
@@ -112,16 +131,17 @@ export default function Header() {
               </p>
             </div>
           </NavbarBrand>
-          <NavbarContent className="hidden sm:flex gap-8 ml-10" justify="center">
+          <NavbarContent
+            className="hidden sm:flex gap-8 ml-10"
+            justify="center"
+          >
             {navigation.map((item) => (
               <NavbarItem key={item.name} isActive={pathname === item.href}>
                 <Link
                   href={item.href}
                   color={pathname === item.href ? "primary" : "foreground"}
                   className={`font-medium text-sm px-1 py-2 transition-all duration-200 ${
-                    pathname === item.href 
-                      ? "" 
-                      : "opacity-70 hover:opacity-100"
+                    pathname === item.href ? "" : "opacity-70 hover:opacity-100"
                   }`}
                 >
                   {item.name}
@@ -141,7 +161,7 @@ export default function Header() {
                   onClick={handleMint}
                   isLoading={isMinting || isSwitching}
                 >
-                  {isSwitching ? 'Switch Network' : 'Mint GRASS'}
+                  {isSwitching ? "Switch Network" : "Mint GRASS"}
                 </Button>
               </div>
             </NavbarItem>
@@ -158,8 +178,8 @@ export default function Header() {
                 href={item.href}
                 color={pathname === item.href ? "primary" : "foreground"}
                 className={`w-full text-base font-medium py-2 ${
-                  pathname === item.href 
-                    ? "bg-primary-500/10" 
+                  pathname === item.href
+                    ? "bg-primary-500/10"
                     : "opacity-70 hover:opacity-100"
                 }`}
               >
@@ -177,7 +197,7 @@ export default function Header() {
                     onClick={handleMint}
                     isLoading={isMinting || isSwitching}
                   >
-                    {isSwitching ? 'Switch Network' : 'Mint GRASS'}
+                    {isSwitching ? "Switch Network" : "Mint GRASS"}
                   </Button>
                 </div>
               )}
@@ -187,5 +207,5 @@ export default function Header() {
         </NavbarMenu>
       </Navbar>
     </div>
-  )
+  );
 }
