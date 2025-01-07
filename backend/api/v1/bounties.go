@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"github.com/bountyBoard/internal/middleware"
-	"github.com/bountyBoard/internal/services"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bountyBoard/internal/database"
+	"github.com/bountyBoard/internal/middleware"
 	"github.com/bountyBoard/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -17,10 +16,12 @@ import (
 )
 
 type CreateBountyRequest struct {
-	Title       string          `json:"title" binding:"required"`
-	Description string          `json:"description" binding:"required"`
-	Reward      decimal.Decimal `json:"reward" binding:"required"`
-	Deadline    time.Time       `json:"deadline" binding:"required"`
+	BlockchainID uint            `json:"blockchain_id" binding:"required"` // Contract bounty ID
+	Title        string          `json:"title" binding:"required"`
+	Description  string          `json:"description" binding:"required"`
+	Reward       decimal.Decimal `json:"reward" binding:"required"`
+	Deadline     time.Time       `json:"deadline" binding:"required"`
+	TxHash       string          `json:"txHash" binding:"required"` // Transaction hash from contract
 }
 
 type SubmitWorkRequest struct {
@@ -34,6 +35,7 @@ func RegisterBountyRoutes(router *gin.Engine) {
 		v1.GET("/bounties", listBounties)
 		v1.GET("/bounties/:id", getBounty)
 		v1.GET("/bounties/:id/submissions", getBountySubmissions)
+		v1.GET("/bounties/:id/comments", getBountyComments)
 	}
 
 	// Protected routes (require auth)
@@ -43,7 +45,9 @@ func RegisterBountyRoutes(router *gin.Engine) {
 		protected.POST("/bounties", createBounty)
 		protected.POST("/bounties/:id/claim", claimBounty)
 		protected.POST("/bounties/:id/submit", submitBounty)
+		protected.POST("/bounties/:id/dispute", raiseDispute)
 		protected.POST("/bounties/:id/complete", completeBounty)
+		protected.POST("/bounties/:id/comments", addBountyComment)
 	}
 }
 
@@ -54,30 +58,20 @@ func createBounty(c *gin.Context) {
 		return
 	}
 
-	// Create IPFS metadata
-	//ipfs := services.NewIPFSService()
-	//metadata := map[string]interface{}{
-	//	"title":       req.Title,
-	//	"description": req.Description,
-	//	"deadline":    req.Deadline,
-	//}
-	//ipfsHash, err := ipfs.UploadJSON(metadata)
-	//if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload to IPFS"})
-	//	return
-	//}
-
 	// Create bounty in database
 	bounty := &models.Bounty{
-		Title:       req.Title,
-		Description: req.Description,
-		Reward:      req.Reward,
-		CreatorID:   strings.ToLower(c.GetString("user_id")), // Convert to lowercase
-		Status:      "open",
-		Deadline:    req.Deadline,
-		IPFSHash:    "",
+		BlockchainID: req.BlockchainID, // Use the contract's bounty ID
+		Title:        req.Title,
+		Description:  req.Description,
+		Reward:       req.Reward,
+		CreatorID:    strings.ToLower(c.GetString("user_id")), // Convert to lowercase
+		Status:       "open",
+		Deadline:     req.Deadline,
+		TxHash:       req.TxHash, // Store the transaction hash
+		IPFSHash:     "",
 	}
 
+	// Use the contract's bounty ID
 	if err := database.DB.Create(bounty).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create bounty"})
 		return
@@ -130,11 +124,7 @@ func listBounties(c *gin.Context) {
 }
 
 func getBounty(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid bounty ID"})
-		return
-	}
+	id := c.Param("id")
 
 	var bounty models.Bounty
 	if err := database.DB.First(&bounty, id).Error; err != nil {
@@ -142,20 +132,33 @@ func getBounty(c *gin.Context) {
 		return
 	}
 
-	// Get IPFS metadata
-	ipfs := services.NewIPFSService()
-	metadata, err := ipfs.GetFile(bounty.IPFSHash)
-	if err == nil {
-		bounty.Description = string(metadata) // Enhance with IPFS metadata
+	// Convert addresses to lowercase for consistency
+	bounty.CreatorID = strings.ToLower(bounty.CreatorID)
+	if bounty.HunterID != nil {
+		hunterID := strings.ToLower(*bounty.HunterID)
+		bounty.HunterID = &hunterID
 	}
+
+	// Log the bounty data for debugging
+	log.Printf("Fetched bounty: %+v", bounty)
 
 	c.JSON(http.StatusOK, bounty)
 }
 
 func getBountySubmissions(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid bounty ID"})
+	id := c.Param("id")
+
+	var bounty models.Bounty
+	if err := database.DB.First(&bounty, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Bounty not found"})
+		return
+	}
+
+	// Allow both creator and hunter to see submissions
+	currentUser := strings.ToLower(c.GetString("user_id"))
+	if currentUser != strings.ToLower(bounty.CreatorID) &&
+		(bounty.HunterID == nil || strings.ToLower(*bounty.HunterID) != currentUser) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only the bounty creator or hunter can view submissions"})
 		return
 	}
 
@@ -166,6 +169,18 @@ func getBountySubmissions(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, submissions)
+}
+
+func getBountyComments(c *gin.Context) {
+	bountyID := c.Param("id")
+	var comments []models.BountyComment
+	
+	if err := database.DB.Where("bounty_id = ?", bountyID).Order("created_at desc").Find(&comments).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch comments"})
+		return
+	}
+
+	c.JSON(http.StatusOK, comments)
 }
 
 func claimBounty(c *gin.Context) {
@@ -226,23 +241,11 @@ func submitBounty(c *gin.Context) {
 		return
 	}
 
-	// Upload submission to IPFS
-	ipfs := services.NewIPFSService()
-	ipfsHash, err := ipfs.UploadJSON(map[string]interface{}{
-		"content": req.Content,
-		"hunter":  hunterID,
-		"time":    time.Now(),
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload submission"})
-		return
-	}
-
+	// Create submission without IPFS for now
 	submission := &models.BountySubmission{
 		BountyID: uint(id),
 		HunterID: hunterID,
 		Content:  req.Content,
-		IPFSHash: ipfsHash,
 		Status:   "pending",
 	}
 
@@ -254,75 +257,114 @@ func submitBounty(c *gin.Context) {
 	c.JSON(http.StatusCreated, submission)
 }
 
-func completeBounty(c *gin.Context) {
-	id := c.Param("id")
-	bountyID, err := strconv.ParseUint(id, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid bounty ID"})
-		return
-	}
-
-	// Start transaction
-	tx := database.DB.Begin()
-	if tx.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
-		return
-	}
-
+func addBountyComment(c *gin.Context) {
+	bountyID := c.Param("id")
 	var bounty models.Bounty
-	if err := tx.First(&bounty, bountyID).Error; err != nil {
-		tx.Rollback()
+	if err := database.DB.First(&bounty, bountyID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Bounty not found"})
 		return
 	}
 
-	// Validate bounty can be completed
-	if bounty.Status == "completed" {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bounty is already completed"})
+	// Only allow creator and hunter to comment
+	currentUser := strings.ToLower(c.GetString("user_id"))
+	if currentUser != strings.ToLower(bounty.CreatorID) &&
+		(bounty.HunterID == nil || strings.ToLower(*bounty.HunterID) != currentUser) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only the bounty creator or hunter can comment"})
 		return
 	}
 
-	if bounty.HunterID == nil {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bounty has no assigned hunter"})
+	var input struct {
+		Content string `json:"content" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Update bounty status
-	bounty.Status = "completed"
-	if err := tx.Save(&bounty).Error; err != nil {
-		tx.Rollback()
+	comment := models.BountyComment{
+		BountyID: bounty.ID,
+		UserID:   currentUser,
+		Content:  input.Content,
+	}
+
+	if err := database.DB.Create(&comment).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create comment"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, comment)
+}
+
+func raiseDispute(c *gin.Context) {
+	id := c.Param("id")
+	currentUser := strings.ToLower(c.GetString("user_id"))
+
+	var bounty models.Bounty
+	if err := database.DB.First(&bounty, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Bounty not found"})
+		return
+	}
+
+	// Only creator can raise disputes
+	if currentUser != strings.ToLower(bounty.CreatorID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only the bounty creator can raise disputes"})
+		return
+	}
+
+	// Can only dispute claimed bounties
+	if bounty.Status != "claimed" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Can only dispute claimed bounties"})
+		return
+	}
+
+	var input struct {
+		Reason string `json:"reason" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Update bounty status to disputed
+	bounty.Status = "disputed"
+	if err := database.DB.Save(&bounty).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bounty status"})
 		return
 	}
 
-	// Award reputation points to the hunter
-	reputationService := services.NewReputationService()
-	reputation, err := reputationService.UpdateScore(*bounty.HunterID, 50) // Award 50 points for completing a bounty
-	if err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update reputation"})
+	c.JSON(http.StatusOK, bounty)
+}
+
+func completeBounty(c *gin.Context) {
+	id := c.Param("id")
+	currentUser := strings.ToLower(c.GetString("user_id"))
+
+	var bounty models.Bounty
+	if err := database.DB.First(&bounty, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Bounty not found"})
 		return
 	}
 
-	// Check and award milestone badges
-	if err := reputationService.CheckAndAwardMilestoneBadges(*bounty.HunterID, reputation); err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check milestone badges"})
+	// Only creator can complete bounties
+	if currentUser != strings.ToLower(bounty.CreatorID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only the bounty creator can complete bounties"})
 		return
 	}
 
-	// Commit transaction
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+	// Can only complete claimed bounties
+	if bounty.Status != "claimed" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Can only complete claimed bounties"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"bounty":     bounty,
-		"reputation": reputation,
-		"message":    "Bounty completed successfully",
-	})
+	// Update bounty status to completed
+	bounty.Status = "completed"
+	if err := database.DB.Save(&bounty).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update bounty status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, bounty)
 }

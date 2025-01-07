@@ -30,6 +30,7 @@ func InitDB() {
 		&models.BountySubmission{},
 		&models.Reputation{},
 		&models.Badge{},
+		&models.BountyComment{},
 	)
 	if err != nil {
 		log.Fatal("Failed to migrate database: ", err)

@@ -3,11 +3,15 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
-import { useAccount } from 'wagmi'
+import { useAccount, useWriteContract, useConfig, useReadContract } from 'wagmi'
+import { waitForTransactionReceipt } from '@wagmi/core'
 import { parseEther } from 'viem'
 import { Card, CardBody, CardHeader, Button, Input, Textarea } from '@nextui-org/react'
 import { motion } from 'framer-motion'
 import { useWalletAuth } from '@/hooks/useWalletAuth'
+import { BOUNTY_BOARD_ADDRESS, BOUNTY_BOARD_ABI } from '@/constants/contracts/BountyBoard'
+import { GRASS_TOKEN_ADDRESS, GRASS_TOKEN_ABI } from '@/constants/contracts/GrassToken'
+import { erc20Abi } from 'viem'
 
 interface FormData {
   title: string
@@ -20,6 +24,17 @@ export default function CreateBounty() {
   const router = useRouter()
   const { isConnected, address } = useAccount()
   const { getAuthHeader, signIn } = useWalletAuth()
+  const config = useConfig()
+  const { writeContractAsync } = useWriteContract()
+  const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Read the current bountyId from the contract
+  const { data: nextBountyId, refetch: refetchNextBountyId } = useReadContract({
+    address: BOUNTY_BOARD_ADDRESS,
+    abi: BOUNTY_BOARD_ABI,
+    functionName: 'nextBountyId',
+  })
+
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -28,12 +43,20 @@ export default function CreateBounty() {
   })
   const [errors, setErrors] = useState<Partial<FormData>>({})
 
-  // Redirect to home if not connected
+  // Wait for wallet connection to initialize before redirecting
   useEffect(() => {
-    if (!isConnected) {
+    const timer = setTimeout(() => {
+      setIsInitialized(true)
+    }, 1000) // Give wagmi time to initialize
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (isInitialized && !isConnected) {
       router.push('/')
     }
-  }, [isConnected, router])
+  }, [isInitialized, isConnected, router])
 
   const validateForm = () => {
     const newErrors: Partial<FormData> = {}
@@ -66,7 +89,7 @@ export default function CreateBounty() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!isConnected) {
+    if (!isConnected || !writeContractAsync) {
       try {
         await signIn()
       } catch (error) {
@@ -86,12 +109,71 @@ export default function CreateBounty() {
     }
 
     try {
+      // First, approve the BountyBoard contract to spend tokens
+      const reward = parseEther(formData.reward)
+      const metadata = JSON.stringify({
+        title: formData.title,
+        description: formData.description,
+        deadline: formData.deadline
+      })
+      console.log("Approving tokens...")
+      const approvalHash = await writeContractAsync({
+        address: GRASS_TOKEN_ADDRESS,
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [BOUNTY_BOARD_ADDRESS, reward],
+        gas: BigInt(100000), // Add gas limit for approval
+      })
+
+      console.log('Approval transaction hash:', approvalHash)
+
+      // Wait for approval transaction to be mined
+      await waitForTransactionReceipt(config, {
+        hash: approvalHash,
+        chainId: 37111,
+      })
+
+      console.log('Approval confirmed, creating bounty...')
+
+      // Now create the bounty
+      const hash = await writeContractAsync({
+        address: BOUNTY_BOARD_ADDRESS,
+        abi: BOUNTY_BOARD_ABI,
+        functionName: 'createBounty',
+        args: [reward, metadata],
+        gas: BigInt(1000000), // Increase gas limit for bounty creation
+      })
+
+      console.log('Transaction hash:', hash)
+
+      const receipt = await waitForTransactionReceipt(config, {
+        hash,
+        chainId: 37111,
+      })
+
+      console.log('Transaction receipt:', receipt)
+
+      if (receipt.status !== 'success') {
+        throw new Error('Contract transaction failed')
+      }
+
+      // Read the nextBountyId value after transaction confirmation
+      const { data: updatedNextBountyId } = await refetchNextBountyId()
+
+      // The bounty ID will be nextBountyId - 1
+      const blockchainId = Number(updatedNextBountyId) - 1
+      console.log('Blockchain ID from updated nextBountyId:', blockchainId)
+
+      // Then create in the database with the blockchain ID
       const payload = {
+        blockchain_id: blockchainId,
         title: formData.title,
         description: formData.description,
         reward: formData.reward,
         deadline: new Date(formData.deadline).toISOString(),
+        txHash: hash,
       }
+      console.log('Sending payload to backend:', payload)
 
       const response = await fetch(`http://localhost:8080/api/v1/bounties`, {
         method: 'POST',
@@ -247,8 +329,8 @@ export default function CreateBounty() {
                       value={formData.reward}
                       onChange={handleChange}
                       required
-                      min="0.01"
-                      step="0.01"
+                      min="1"
+                      step="1"
                       variant="bordered"
                       placeholder="Enter the reward amount in GRASS"
                       classNames={{

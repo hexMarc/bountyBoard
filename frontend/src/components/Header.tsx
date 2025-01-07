@@ -7,6 +7,8 @@ import { useAccount, useWriteContract, useTransaction, useChainId, useSwitchChai
 import { ConnectKitButton } from 'connectkit'
 import { parseEther } from 'viem'
 import { Network } from '@/constants/contracts'
+import { useRouter } from 'next/navigation'
+import { useClaimableRewards } from '@/hooks/useClaimableRewards'
 
 const navigation = [
   { name: 'Dashboard', href: '/' },
@@ -21,12 +23,16 @@ export default function Header() {
   const pathname = usePathname()
   const chainId = useChainId()
   const { switchChain, isPending: isSwitching } = useSwitchChain()
+  const router = useRouter()
 
   const { writeContract: mint, data: mintData } = useWriteContract()
 
   const { isLoading: isMinting } = useTransaction({
     hash: mintData,
   })
+
+  const { formattedRewards } = useClaimableRewards()
+  const hasRewards = Number(formattedRewards) > 0
 
   const handleMint = async () => {
     if (!address) return
@@ -132,14 +138,26 @@ export default function Header() {
         <NavbarContent justify="end" className="basis-1/5 sm:basis-auto gap-4">
           {isConnected && (
             <NavbarItem className="hidden sm:flex">
-              <Button
-                color="primary"
-                variant="flat"
-                onClick={handleMint}
-                isLoading={isLoading}
-              >
-                {buttonText}
-              </Button>
+              <div className="flex gap-4 items-center">
+                <Button
+                  color="success"
+                  variant="ghost"
+                  onClick={handleMint}
+                  isLoading={isMinting || isSwitching}
+                >
+                  {isSwitching ? 'Switch Network' : 'Mint GRASS'}
+                </Button>
+                {hasRewards && (
+                  <Button
+                    color="warning"
+                    variant="ghost"
+                    onClick={() => router.push('/profile')}
+                    endContent={<span className="text-sm">({formattedRewards} GRASS)</span>}
+                  >
+                    Claim Rewards
+                  </Button>
+                )}
+              </div>
             </NavbarItem>
           )}
           <NavbarItem className="hidden sm:flex">
@@ -166,15 +184,26 @@ export default function Header() {
           <NavbarMenuItem className="mt-8 pb-6 border-t border-foreground/10 pt-6">
             <div className="flex flex-col gap-4 w-full">
               {isConnected && (
-                <Button
-                  color="primary"
-                  variant="flat"
-                  onClick={handleMint}
-                  isLoading={isLoading}
-                  className="w-full"
-                >
-                  {buttonText}
-                </Button>
+                <div className="flex gap-4 items-center">
+                  <Button
+                    color="success"
+                    variant="ghost"
+                    onClick={handleMint}
+                    isLoading={isMinting || isSwitching}
+                  >
+                    {isSwitching ? 'Switch Network' : 'Mint GRASS'}
+                  </Button>
+                  {hasRewards && (
+                    <Button
+                      color="warning"
+                      variant="ghost"
+                      onClick={() => router.push('/profile')}
+                      endContent={<span className="text-sm">({formattedRewards} GRASS)</span>}
+                    >
+                      Claim Rewards
+                    </Button>
+                  )}
+                </div>
               )}
               <ConnectKitButton />
             </div>
