@@ -14,7 +14,7 @@ RUN npm config set fetch-retry-maxtimeout 600000 \
     && npm config set fetch-timeout 300000
 
 # Install dependencies
-RUN npm install --fetch-timeout 300000 --fetch-retry-maxtimeout 600000
+RUN npm install --fetch-timeout 300000 --fetch-retry-maxtimeout 600000 --force
 
 # Copy the rest of the application
 COPY . .
